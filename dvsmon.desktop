@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=DVswitch launcher
+Comment=Manages DVswitch components 
+Exec=/usr/bin/dvs-mon.py
+Terminal=true
+Type=Application
+Icon=dvswitch-logo.svg
+Categories=AudioVideo;

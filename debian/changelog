@@ -1,0 +1,17 @@
+dvsmon (1.0-0ubuntu3) jaunty; urgency=low
+
+  * ./mkdeb.sh
+
+ -- Carl Karsten <carl@personnelware.com>  Sun, 05 Jul 2009 00:56:11 -0500
+
+dvsmon (1.0-0ubuntu2) jaunty; urgency=low
+
+  * added test-[123].dv files
+
+ -- Carl Karsten <carl@personnelware.com>  Sat, 04 Jul 2009 16:24:35 -0500
+
+dvsmon (1.0-0ubuntu1~ppa1) jaunty; urgency=low
+
+  * Initial release 
+
+ -- Carl F. Karsten <carl@personnelware.com>  Sat, 04 Jul 2009 12:10:50 -0600
