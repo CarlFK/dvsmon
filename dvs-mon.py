@@ -74,12 +74,10 @@ class CommandRunner:
         btn2.SetSizerProps(proportion=5, expand=True)
         
         btn3 = wx.Button(panel, label='X')
-        # btn3.parent = parent
         btn3.Bind(wx.EVT_BUTTON, self.OnXClicked)
         btn3.SetSizerProps(proportion=3, expand=True)
         
         panel2 = sc.SizedPanel(parent)
-        # panel2.SetSizerType('horizontal')
         panel2.SetSizerType('vertical')
         panel2.SetSizerProps(expand=True, proportion=2)
         self.panel2 = panel2
@@ -102,7 +100,6 @@ class CommandRunner:
             self.process.Redirect()
             self.pid = wx.Execute(self.cmd, wx.EXEC_ASYNC, self.process)
             print 'Executed: ' + self.cmd
-            # print 'with pid %d' % self.pid
             
     def OnKillClicked(self, event):
         if self.pid:
@@ -111,6 +108,7 @@ class CommandRunner:
             self.pid = None
         
     def OnXClicked(self, event):
+        # remove this command to make room for the stuff we care about
         if self.pid is None:
             parent=self.panel.GetTopLevelParent() # Parent
             self.panel.Destroy() 
