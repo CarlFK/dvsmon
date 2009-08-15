@@ -2,15 +2,17 @@
 
 COMMANDS = [
     'dvswitch',
-    'dvsource-firewire -c 0',
+    'dvsource-alsa -s ntsc -r 48000 hw:1',
+    'dvsource-firewire',
     'dvsource-firewire -c 1',
+    'dvsink-files /media/disk/Videos/dv/%Y-%m-%d/UserGroup/%H:%M:%S.dv',
     'dvsource-file -l /usr/share/dvsmon/dv/test-1.dv',
     'dvsource-file -l /usr/share/dvsmon/dv/test-2.dv',
-    'dvsource-file -l /usr/share/dvsmon/dv/test-3.dv',
-    'dvsource-alsa -s ntsc -r 48000 hw:1',
-    'dvsink-files /media/disk/Videos/UserGroup/ug',
     'dvsink-command -- ffmpeg2theora - -f dv -F 25:5 -v 2 -a 1 -c 1 -H 11025 -o - | oggfwd giss.tv 8001 my_pw /CarlFK.ogg"',
     ]
+
+# "'$FILE_BASE/dv/%Y-%m-%d/$ROOM_NAME/%H:%M:%S.dv'"
+# ffmpeg -f video4linux2 -s 1024x768 -i /dev/video0 -target ntsc-dv -y - | dvsource-file /dev/stdin
 
 ##==============================================================================
 import wx
@@ -136,7 +138,7 @@ class CommandRunner:
         self.process.Destroy()
         self.process = None
 
-        print 'Process %d terminated:' % (self.pid, self.cmd)
+        print 'Process %s terminated: %s' % (self.pid, self.cmd)
         self.pid=None
 
             
