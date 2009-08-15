@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# find a place to save files
+# look for ~/Videos, then /media/disk, then /media/*
+
 COMMANDS = [
     'dvswitch',
     'dvsource-alsa -s ntsc -r 48000 hw:1',
