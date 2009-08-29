@@ -10,6 +10,7 @@ COMMANDS = [
     'dvsource-firewire -c 1',
     'dvsource-file -l /usr/share/dvsmon/dv/test-1.dv',
     'dvsource-file -l /usr/share/dvsmon/dv/test-2.dv',
+    'dvsink-files Videos/dv/%Y-%m-%d/%H:%M:%S.dv',
     'dvsink-files /media/disk/Videos/dv/%Y-%m-%d/%H:%M:%S.dv',
     ]
 
