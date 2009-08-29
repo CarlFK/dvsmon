@@ -8,6 +8,6 @@ Homepage: http://dvswitch.alioth.debian.org/wiki/dvsmon
 
 Package: dvsmon
 Architecture: all
-Depends: python-gtk2,python (>= 2.5),dvswitch, dvsource, dvsink
+Depends: python-wxgtk2.8,python (>= 2.5),dvswitch, dvsource, dvsink
 XB-Python-Version: ${python:Versions}
 Description: GUI to launch and monitor the DVswitch components.
