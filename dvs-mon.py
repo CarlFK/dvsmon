@@ -68,7 +68,9 @@ class CommandRunner:
 
         txt1 = wx.TextCtrl(panel, value=self.cmd, style=wx.TE_READONLY)
         # txt1 = wx.TextCtrl(panel, value=self.cmd)
+        txt1.SetForegroundColour(wx.BLUE)
         txt1.SetSizerProps(proportion=40, expand=True)
+        self.txt1=txt1
 
         btn1 = wx.Button(panel, label='Run')
         btn1.Bind(wx.EVT_BUTTON, self.OnRunClicked)
@@ -101,6 +103,7 @@ class CommandRunner:
         
     def OnRunClicked(self, event):
         if self.pid is None:
+            self.txt1.SetForegroundColour(wx.GREEN)
             self.process = wx.Process(self.panel)
             self.process.Redirect()
             self.pid = wx.Execute(self.cmd, wx.EXEC_ASYNC, self.process)
@@ -111,6 +114,7 @@ class CommandRunner:
             print 'Trying to kill process %d: %s' % (self.pid, self.cmd)
             wx.Process.Kill(self.pid)
             self.pid = None
+            self.txt1.SetForegroundColour(wx.BLUE)
         
     def OnXClicked(self, event):
         # remove this command to make room for the stuff we care about
@@ -133,6 +137,7 @@ class CommandRunner:
                 self.stderr.AppendText("\n"+stream.read().strip())
 
     def OnProcessEnded(self, event):
+        self.txt1.SetForegroundColour(wx.RED)
         stream = self.process.GetInputStream()
 
         if stream.CanRead():

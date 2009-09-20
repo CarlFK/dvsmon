@@ -1,3 +1,16 @@
+dvsmon (1.0-0ubuntu9) jaunty; urgency=low
+
+  * command collor shows state
+
+ -- Carl Karsten <carl@personnelware.com>  Sun, 20 Sep 2009 14:27:59 -0500
+
+dvsmon (1.0-0ubuntu8) hardy; urgency=low
+
+  * hardy build
+  * saves to /media/disk or Video/dv 
+
+ -- Carl Karsten <carl@personnelware.com>  Sat, 29 Aug 2009 11:28:31 -0500
+
 dvsmon (1.0-0ubuntu6) jaunty; urgency=low
 
   * touched up deps 
