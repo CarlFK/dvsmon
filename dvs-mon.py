@@ -3,21 +3,55 @@
 # find a place to save files
 # look for ~/Videos, then /media/disk, then /media/*
 
+import os
+
+# make a list of dirs to search - firs one that exits wins.
+# look for existing veyepar dirs
+# home dir
+dirs  = [os.path.expanduser('~/Videos/veyepar')]
+# anyting mounted under /media with a Videos/veyepar dir
+dirs += ["/media/%s/Videos/veyepar"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
+# can't find a veyepar dir. now start looking for anything reasonable. 
+# someday maybe search for something with the most free space.
+dirs += ["/media/%s/Videos"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
+dirs += ["/media/%s"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
+# if we get here, I hope it isn't the live CD.
+dirs += [os.path.expanduser('~/Videos')]
+dirs += [os.path.expanduser('~')]
+
+print "dirs to check:", dirs
+
+for vid_dir in dirs:
+    print "checking", vid_dir
+    if os.path.exists(vid_dir):
+        print "found."
+        break
+
 COMMANDS = [
     'dvswitch',
     'dvsource-alsa -s ntsc -r 48000 hw:1',
     'dvsource-firewire',
     'dvsource-firewire -c 1',
-    'dvsource-file -l /usr/share/dvsmon/dv/test-1.dv',
-    'dvsource-file -l /usr/share/dvsmon/dv/test-2.dv',
-    'dvsink-files Videos/dv/%Y-%m-%d/%H:%M:%S.dv',
-    'dvsink-files /media/disk/Videos/dv/%Y-%m-%d/%H:%M:%S.dv',
+    'dvsink-files '+vid_dir+'/dv/%Y-%m-%d/%H:%M:%S.dv',
+    'dvsink-command -- playdv',
     ]
+
+# find test files
+if os.path.exists('/usr/share/dvsmon/dv/test-1.dv'):
+    for i in '123': 
+        COMMANDS += [ 'dvsource-file -l /usr/share/dvsmon/dv/test-%s.dv'%i ]
+elif os.path.exists('app_data/dv/test-1.dv'):
+    for i in '123': 
+        COMMANDS += [ 'dvsource-file -l app_data/dv/test-%s.dv'%i ]
+
+
 
 # ffmpeg -f video4linux2 -s 1024x768 -i /dev/video0 -target ntsc-dv -y - | dvsource-file /dev/stdin
 # 'dvsink-command -- ffmpeg2theora - -f dv -F 25:5 -v 2 -a 1 -c 1 -H 11025 -o - | oggfwd giss.tv 8001 my_pw /CarlFK.ogg"',
 
 ##==============================================================================
+import optparse
+
 import wx
 import wx.lib.sized_controls as sc
 
@@ -137,7 +171,8 @@ class CommandRunner:
                 self.stderr.AppendText("\n"+stream.read().strip())
 
     def OnProcessEnded(self, event):
-        self.txt1.SetForegroundColour(wx.RED)
+        if self.pid:
+            self.txt1.SetForegroundColour(wx.RED)
         stream = self.process.GetInputStream()
 
         if stream.CanRead():
@@ -149,6 +184,21 @@ class CommandRunner:
         print 'Process %s terminated: %s' % (self.pid, self.cmd)
         self.pid=None
 
+def parse_args():
+    parser = optparse.OptionParser()
+    parser.add_option('-r', '--rootdir', help="media files dir",
+        default= '/media/disk/Videos/dv' )
+    parser.add_option('-v', '--verbose', action="store_true" )
+    parser.add_option('-c', '--commands', action="store_true",
+      help="command file" )
+
+    options, args = parser.parse_args()
+    return options, args
+
+
             
 if __name__ == '__main__':
+    options, args = parse_args()
+    if options.commands:
+        from dvsmonrc import COMMANDS 
     main()
