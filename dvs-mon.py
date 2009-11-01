@@ -6,7 +6,7 @@
 import os
 
 # make a list of dirs to search - firs one that exits wins.
-# look for existing veyepar dirs
+# look for existing veyepar dir
 # home dir
 dirs  = [os.path.expanduser('~/Videos/veyepar')]
 # anyting mounted under /media with a Videos/veyepar dir
@@ -14,9 +14,14 @@ dirs += ["/media/%s/Videos/veyepar"%dir for dir in os.listdir('/media') if dir[0
 # can't find a veyepar dir. now start looking for anything reasonable. 
 # someday maybe search for something with the most free space.
 dirs += ["/media/%s/Videos"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
-dirs += ["/media/%s"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
-# if we get here, I hope it isn't the live CD.
 dirs += [os.path.expanduser('~/Videos')]
+# rom excludes cdrom cdrom-1 or any other rom.
+dirs += ["/media/%s"%dir 
+    for dir in os.listdir('/media') \
+        if (dir[0]!='.' 
+            and 'rom' not in dir
+            and 'floppy' not in dir) ]
+# if we get here, I hope it isn't the live CD.
 dirs += [os.path.expanduser('~')]
 
 print "dirs to check:", dirs
@@ -24,8 +29,21 @@ print "dirs to check:", dirs
 for vid_dir in dirs:
     print "checking", vid_dir
     if os.path.exists(vid_dir):
-        print "found."
-        break
+        print "found, checking for write perms..." 
+        w_perm = os.access(vid_dir, os.W_OK)
+        print 'os.access("%s", os.W_OK): %s'%( vid_dir, w_perm )
+        if w_perm:
+            s=os.statvfs(vid_dir)
+            print 'block size: %s' % s.f_bsize
+            print 'free blocks: %s' % s.f_bavail
+            gigfree=s.f_bsize * s.f_bavail / 1024.0**3
+            minutes = gigfree/.23
+            print 'free space: %s gig' % round(gigfree,1)
+            print 'room for: %s min' % round(minutes,1)
+            if minutes>1:
+                break
+            else:
+                print "not enough."
 
 COMMANDS = [
     'dvswitch',
