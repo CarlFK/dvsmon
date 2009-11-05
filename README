@@ -1,0 +1,12 @@
+dvsmon
+By Carl Karsten
+
+Manages DVSwitch components: GUI server, sources and sinks.
+
+Attempts to find a reasonable place to store dv files. By looking at dirs in ~/Videos, /media,for a dir that is writable and has at least 1gig of free space.
+
+Other than that, it just runs commands and displays their output.  See the dvswitch docs for descriptions of the commands.
+
+Can be installed from:
+https://edge.launchpad.net/~carlfk/+archive/ppa
+
