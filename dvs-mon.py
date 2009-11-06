@@ -204,19 +204,17 @@ class CommandRunner:
 
 def parse_args():
     parser = optparse.OptionParser()
-    parser.add_option('-r', '--rootdir', help="media files dir",
-        default= '/media/disk/Videos/dv' )
     parser.add_option('-v', '--verbose', action="store_true" )
-    parser.add_option('-c', '--commands', action="store_true",
+    parser.add_option('-c', '--commands', 
       help="command file" )
 
     options, args = parser.parse_args()
     return options, args
 
-
-            
 if __name__ == '__main__':
     options, args = parse_args()
     if options.commands:
-        from dvsmonrc import COMMANDS 
+        settings = {'COMMANDS':COMMANDS}
+        execfile(options.commands, settings)
+        COMMANDS = settings['COMMANDS']
     main()
