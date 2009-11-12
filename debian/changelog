@@ -1,4 +1,36 @@
-dvsmon (1.0-0ubuntu9) jaunty; urgency=low
+dvsmon (1.1-2) karmic; urgency=low
+
+  * better packaging:
+  * remove ubuntu names, 
+  * "Architecture" needs to be set to "any", not "all"
+
+ -- Carl Karsten <carl@personnelware.com>  Thu, 12 Nov 2009 10:05:44 -0600
+
+dvsmon (1.1-0ubuntu15~karmic1ubuntu1) jaunty; urgency=low
+
+  * config command line option less surprising
+
+ -- Carl Karsten <carl@personnelware.com>  Thu, 05 Nov 2009 19:59:29 -0600
+
+dvsmon (1.1-0ubuntu15~karmic1) karmic; urgency=low
+
+  * target has write perms and space
+
+ -- Carl Karsten <carl@personnelware.com>  Sun, 01 Nov 2009 15:29:48 -0600
+
+dvsmon (1.0-0ubuntu13) karmic; urgency=low
+
+  * exclude /media/cdrom
+
+ -- Carl Karsten <carl@personnelware.com>  Mon, 26 Oct 2009 16:03:41 -0500
+
+dvsmon (1.0-0ubuntu11) jaunty; urgency=low
+
+  * commands change colors
+
+ -- Carl Karsten <carl@personnelware.com>  Thu, 15 Oct 2009 22:24:53 -0500
+
+dvsmon (1.0-0ubuntu10) jaunty; urgency=low
 
   * command collor shows state
 
