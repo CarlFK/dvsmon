@@ -4,9 +4,11 @@
 # look for ~/Videos, then /media/disk, then /media/*
 
 import os
+import socket
 
-# make a list of dirs to search - firs one that exits wins.
-# look for existing veyepar dir
+# make a list of dirs to search - 
+# use any that have a dv or veyepar dir
+# else find the 'best' one.
 # home dir
 dirs  = [os.path.expanduser('~/Videos/veyepar')]
 # anyting mounted under /media with a Videos/veyepar dir
@@ -26,6 +28,7 @@ dirs += [os.path.expanduser('~')]
 
 print "dirs to check:", dirs
 
+vid_dirs=[]
 for vid_dir in dirs:
     print "checking", vid_dir
     if os.path.exists(vid_dir):
@@ -40,19 +43,23 @@ for vid_dir in dirs:
             minutes = gigfree/.23
             print 'free space: %s gig' % round(gigfree,1)
             print 'room for: %s min' % round(minutes,1)
-            if minutes>1:
-                break
+            if minutes>5:
+                vid_dirs.append(vid_dir)
             else:
-                print "not enough."
+                print "%s minutes is not enough." % (minutes)
+
+
+hostname=socket.gethostname()
 
 COMMANDS = [
     'dvswitch',
     'dvsource-alsa -s ntsc -r 48000 hw:1',
     'dvsource-firewire',
     'dvsource-firewire -c 1',
-    'dvsink-files '+vid_dir+'/dv/%Y-%m-%d/%H:%M:%S.dv',
-    'dvsink-command -- playdv',
     ]
+for vid_dir in vid_dirs:
+    COMMANDS.append('dvsink-files ' + os.path.join( vid_dir, 'dv',
+        hostname,'%Y-%m-%d','%H:%M:%S.dv' ))
 
 # find test files
 if os.path.exists('/usr/share/dvsmon/dv/test-1.dv'):
@@ -79,7 +86,7 @@ def main():
     size=wx.GetDisplaySize()
     print size
         
-    frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(800, size[1]))
+    frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(450, size[1]))
     
     panel = frame.GetContentsPane()
 
