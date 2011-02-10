@@ -58,8 +58,10 @@ def mk_commands(opts,args):
     COMMANDS = [
         'dvswitch %s' % (hostport,),
         'dvsource-alsa %s -s ntsc -r 48000 hw:1' % (hostport,),
-        'dvsource-firewire %s' % (hostport,),
+        'dvsource-firewire %s -c 0' % (hostport,),
         'dvsource-firewire %s -c 1' % (hostport,),
+        # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 0' % (hostport,),
+        # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 1' % (hostport,),
         ]
     for vid_dir in vid_dirs:
         COMMANDS.append(
@@ -74,7 +76,7 @@ def mk_commands(opts,args):
             fullpath=os.path.join(d,test_dv )
             if os.path.exists( fullpath ):
                 COMMANDS += [ 'dvsource-file %s -l %s'%(hostport,fullpath) ]
-
+                exit
 
     # ffmpeg -f video4linux2 -s 1024x768 -i /dev/video0 -target ntsc-dv -y - | dvsource-file /dev/stdin
     # 'dvsink-command -- ffmpeg2theora - -f dv -F 25:5 -v 2 -a 1 -c 1 -H 11025 -o - | oggfwd giss.tv 8001 my_pw /CarlFK.ogg"',
