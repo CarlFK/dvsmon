@@ -46,6 +46,7 @@ def mk_commands(opts,args):
                 print 'room for: %s min' % round(minutes,1)
                 if minutes>5:
                     vid_dirs.append(vid_dir)
+                    break
                 else:
                     print "%s minutes is not enough." % (minutes)
 
@@ -63,10 +64,12 @@ def mk_commands(opts,args):
         # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 0' % (hostport,),
         # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 1' % (hostport,),
         ]
+
+    # add output dirs found above
     for vid_dir in vid_dirs:
         COMMANDS.append(
           'dvsink-files %s %s' % ( hostport, 
-            os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H:%M:%S.dv' )))
+            os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' )))
 
     # find test files
     for i in '123': 

@@ -2,12 +2,12 @@ Source: dvsmon
 Section: video
 Priority: optional
 Maintainer: Carl F. Karsten <carl@personnelware.com>
-Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5.0.38), python-central (>= 0.6.0), python (>= 2.4)
+Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5.0.38), python-central (>= 0.6.0), python-all-dev
 XS-Python-Version: all
-Homepage: http://dvswitch.alioth.debian.org/wiki/dvsmon
+Homepage: https://github.com/CarlFK/dvsmon
 
 Package: dvsmon
 Architecture: any
-Depends: python-wxgtk2.8, python (>= 2.5), dvswitch, dvsource, dvsink
+Depends: python-wxgtk2.8, ${python:Depends}, dvswitch, dvsource, dvsink
 XB-Python-Version: ${python:Versions}
 Description: GUI to launch and monitor the DVswitch components.
