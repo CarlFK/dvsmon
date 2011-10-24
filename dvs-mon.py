@@ -61,6 +61,7 @@ def mk_commands(opts,args):
         'dvsource-alsa %s -s ntsc -r 48000 hw:1' % (hostport,),
         'dvsource-firewire %s -c 0' % (hostport,),
         'dvsource-firewire %s -c 1' % (hostport,),
+        'dvsink-command %s -- ffplay - -f dv -vn -framedrop -threads 1' % (hostport,),
         # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 0' % (hostport,),
         # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 1' % (hostport,),
         ]
