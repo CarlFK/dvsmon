@@ -15,12 +15,6 @@ def mk_commands(args):
     for cmd_file in args.commands:
         execfile(cmd_file, locals())
 
-# get from v4l device (like usb cam)
-    # ffmpeg -f video4linux2 -s 1024x768 -i /dev/video0 -target ntsc-dv -y - | dvsource-file /dev/stdin
-
-# encode and send to icecast 
-    # 'dvsink-command -- ffmpeg2theora - -f dv -F 25:5 -v 2 -a 1 -c 1 -H 11025 -o - | oggfwd giss.tv 8001 my_pw /CarlFK.ogg"',
-
     return COMMANDS
 
 ##==============================================================================
@@ -137,7 +131,7 @@ def main():
     app = wx.PySimpleApp()
     
     size=wx.GetDisplaySize()
-    print size
+    # print size
         
     frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(450, size[1]))
     
