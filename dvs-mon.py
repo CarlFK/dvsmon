@@ -1,88 +1,24 @@
 #!/usr/bin/python
 
-# find a place to save files
-# look for ~/Videos, then /media/disk, then /media/*
-
-import os
-import socket
+import subprocess
 
 def mk_commands(args):
-    # make a list of dirs to search - 
-    # use any that have a dv or veyepar dir
-    # else find the 'best' one.
-    # home dir
-    dirs  = [os.path.expanduser('~/Videos/veyepar')]
-    # anyting mounted under /media with a Videos/veyepar dir
-    dirs += ["/media/%s/Videos/veyepar"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
-    # can't find a veyepar dir. now start looking for anything reasonable. 
-    # someday maybe search for something with the most free space.
-    dirs += ["/media/%s/Videos"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
-    dirs += [os.path.expanduser('~/Videos')]
-    # rom excludes cdrom cdrom-1 or any other rom.
-    dirs += ["/media/%s"%dir 
-        for dir in os.listdir('/media') \
-            if (dir[0]!='.' 
-                and 'rom' not in dir
-                and 'floppy' not in dir) ]
-    # if we get here, I hope it isn't the live CD.
-    dirs += [os.path.expanduser('~')]
-
-    print "dirs to check:", dirs
-
-    vid_dirs=[]
-    for vid_dir in dirs:
-        print "checking", vid_dir
-        if os.path.exists(vid_dir):
-            print "found, checking for write perms..." 
-            w_perm = os.access(vid_dir, os.W_OK)
-            print 'os.access("%s", os.W_OK): %s'%( vid_dir, w_perm )
-            if w_perm:
-                s=os.statvfs(vid_dir)
-                print 'block size: %s' % s.f_bsize
-                print 'free blocks: %s' % s.f_bavail
-                gigfree=s.f_bsize * s.f_bavail / 1024.0**3
-                minutes = gigfree/.23
-                print 'free space: %s gig' % round(gigfree,1)
-                print 'room for: %s min' % round(minutes,1)
-                if minutes>5:
-                    vid_dirs.append(vid_dir)
-                    break
-                else:
-                    print "%s minutes is not enough." % (minutes)
 
     host = "--host %s" % args.host if args.host else ''
     port = "--port %s" % args.port if args.port else ''
     hostport = ' '.join([host,port])
 
-    hostname=socket.gethostname()
+    COMMANDS = [ 'dvswitch %s' % (hostport,), ]
+    # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 0' % (hostport,),
+    # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 1' % (hostport,),
 
-    COMMANDS = [
-        'dvswitch %s' % (hostport,),
-        'dvsource-alsa %s -s ntsc -r 48000 hw:1' % (hostport,),
-        'dvsource-firewire %s -c 0' % (hostport,),
-        'dvsource-firewire %s -c 1' % (hostport,),
-        'dvsink-command %s -- ffplay - -f dv -vn -framedrop -threads 1' % (hostport,),
-        # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 0' % (hostport,),
-        # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 1' % (hostport,),
-        ]
+    for cmd_file in args.commands:
+        execfile(cmd_file, locals())
 
-    # add output dirs found above
-    for vid_dir in vid_dirs:
-        COMMANDS.append(
-          'dvsink-files %s %s' % ( hostport, 
-            os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' )))
-
-    # find test files
-    for i in '123': 
-        test_dv = 'test-%s.dv' % (i)
-        dirs=['/usr/share/dvsmon/dv/','app_data/dv/']
-        for d in dirs:
-            fullpath=os.path.join(d,test_dv )
-            if os.path.exists( fullpath ):
-                COMMANDS += [ 'dvsource-file %s -l %s'%(hostport,fullpath) ]
-                exit
-
+# get from v4l device (like usb cam)
     # ffmpeg -f video4linux2 -s 1024x768 -i /dev/video0 -target ntsc-dv -y - | dvsource-file /dev/stdin
+
+# encode and send to icecast 
     # 'dvsink-command -- ffmpeg2theora - -f dv -F 25:5 -v 2 -a 1 -c 1 -H 11025 -o - | oggfwd giss.tv 8001 my_pw /CarlFK.ogg"',
 
     return COMMANDS
@@ -138,11 +74,9 @@ class CommandRunner:
         self.panel = panel
         self.pid=None
 
-        txt1 = wx.TextCtrl(panel, value=self.cmd, style=wx.TE_READONLY)
-        # txt1 = wx.TextCtrl(panel, value=self.cmd)
-        txt1.SetForegroundColour(wx.BLUE)
-        txt1.SetSizerProps(proportion=40, expand=True)
-        self.txt1=txt1
+        self.txt_cmd = wx.TextCtrl(panel, value=self.cmd, style=wx.TE_READONLY)
+        self.txt_cmd.SetForegroundColour(wx.BLUE)
+        self.txt_cmd.SetSizerProps(proportion=40, expand=True)
 
         btn1 = wx.Button(panel, label='Run')
         btn1.Bind(wx.EVT_BUTTON, self.OnRunClicked)
@@ -156,26 +90,24 @@ class CommandRunner:
         btn3.Bind(wx.EVT_BUTTON, self.OnXClicked)
         btn3.SetSizerProps(proportion=3, expand=True)
         
-        panel2 = sc.SizedPanel(parent)
-        panel2.SetSizerType('vertical')
-        panel2.SetSizerProps(expand=True, proportion=2)
-        self.panel2 = panel2
+        self.panel2 = sc.SizedPanel(parent)
+        self.panel2.SetSizerType('vertical')
+        self.panel2.SetSizerProps(expand=True, proportion=2)
 
-        txt2 = wx.TextCtrl(panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
-        txt2.SetSizerProps(proportion=1, expand=True)
-        self.stdout = txt2
+        self.stdout = wx.TextCtrl(
+                self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
+        self.stdout.SetSizerProps(proportion=1, expand=True)
 
-        txt3 = wx.TextCtrl(panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
-        txt3.SetSizerProps(proportion=1, expand=True)
-        txt3.SetForegroundColour(wx.RED)
-        self.stderr = txt3
+        self.stderr = wx.TextCtrl(self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
+        self.stderr.SetSizerProps(proportion=1, expand=True)
+        self.stderr.SetForegroundColour(wx.RED)
 
         # Return the timer callback:
         self.timerCallbacks.append(self.OnTimer)
         
     def OnRunClicked(self, event):
         if self.pid is None:
-            self.txt1.SetForegroundColour(wx.GREEN)
+            self.txt_cmd.SetForegroundColour(wx.GREEN)
             self.process = wx.Process(self.panel)
             self.process.Redirect()
             self.pid = wx.Execute(self.cmd, wx.EXEC_ASYNC, self.process)
@@ -186,7 +118,7 @@ class CommandRunner:
             print 'Trying to kill process %d: %s' % (self.pid, self.cmd)
             wx.Process.Kill(self.pid)
             self.pid = None
-            self.txt1.SetForegroundColour(wx.BLUE)
+            self.txt_cmd.SetForegroundColour(wx.BLUE)
         
     def OnXClicked(self, event):
         # remove this command to make room for the stuff we care about
@@ -210,7 +142,7 @@ class CommandRunner:
 
     def OnProcessEnded(self, event):
         if self.pid:
-            self.txt1.SetForegroundColour(wx.RED)
+            self.txt_cmd.SetForegroundColour(wx.RED)
         stream = self.process.GetInputStream()
 
         if stream.CanRead():
@@ -231,16 +163,9 @@ def parse_args():
       help="command file" )
 
     args = parser.parse_args()
-    print args
-    print args.host
     return args
 
 if __name__ == '__main__':
     args = parse_args()
     COMMANDS=mk_commands(args)
-    if args.commands:
-      for cmd_file in args.commands:
-        settings = {'COMMANDS':COMMANDS}
-        execfile(cmd_file, settings)
-        COMMANDS = settings['COMMANDS']
     main()
