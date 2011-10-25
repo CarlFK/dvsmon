@@ -1,6 +1,11 @@
 #!/usr/bin/python
 
+import argparse
 import subprocess
+
+import wx
+import wx.lib.sized_controls as sc
+
 
 def mk_commands(args):
 
@@ -8,20 +13,18 @@ def mk_commands(args):
     port = "--port %s" % args.port if args.port else ''
     hostport = ' '.join([host,port])
 
-    COMMANDS = [ 'dvswitch %s' % (hostport,), ]
+    COMMANDS = [ ]
     # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 0' % (hostport,),
     # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 1' % (hostport,),
 
     for cmd_file in args.commands:
         execfile(cmd_file, locals())
 
+    # strip trailing spaces which get passed as a parameter.
+    COMMANDS = [cmd.strip() for cmd in COMMANDS]
+
     return COMMANDS
 
-##==============================================================================
-import argparse
-
-import wx
-import wx.lib.sized_controls as sc
 
 class CommandRunner:
     """
@@ -67,15 +70,14 @@ class CommandRunner:
         self.panel2.SetSizerType('vertical')
         self.panel2.SetSizerProps(expand=True, proportion=2)
 
-        self.stdout = wx.TextCtrl(
-                self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
+        self.stdout = wx.TextCtrl( self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stdout.SetSizerProps(proportion=1, expand=True)
 
         self.stderr = wx.TextCtrl(self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stderr.SetSizerProps(proportion=1, expand=True)
         self.stderr.SetForegroundColour(wx.RED)
 
-        # Return the timer callback:
+        # add to the timer callback list:
         self.timerCallbacks.append(self.OnTimer)
         
     def OnRunClicked(self, event):
@@ -132,16 +134,9 @@ def main():
     
     size=wx.GetDisplaySize()
     # print size
-        
     frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(450, size[1]))
-    
     panel = frame.GetContentsPane()
 
-    timer = wx.Timer(panel)
-    timer.Start(1000)
-
-    timerCallbacks = []
-    
     for cmd in COMMANDS:
         cr = CommandRunner(cmd)
         cr.addWidgets(panel, frame)
@@ -151,6 +146,8 @@ def main():
             cb(evt)
 
     panel.Bind(wx.EVT_TIMER, OnTimer)
+    timer = wx.Timer(panel)
+    timer.Start(1000)
 
     frame.Show()
     # SetSizeHints(minW, minH, maxW, maxH)
