@@ -29,64 +29,43 @@ import argparse
 import wx
 import wx.lib.sized_controls as sc
 
-def main():
-    app = wx.PySimpleApp()
-    
-    size=wx.GetDisplaySize()
-    print size
-        
-    frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(450, size[1]))
-    
-    panel = frame.GetContentsPane()
-
-    timer = wx.Timer(panel)
-    timer.Start(1000)
-
-    timerCallbacks = []
-    
-    for cmd in COMMANDS:
-        cr = CommandRunner(cmd)
-        cr.addWidgets(panel, frame)
-
-    def OnTimer(evt):
-        for cb in CommandRunner.timerCallbacks:
-            cb(evt)
-
-    panel.Bind(wx.EVT_TIMER, OnTimer)
-
-    frame.Show()
-    # SetSizeHints(minW, minH, maxW, maxH)
-
-    app.MainLoop()
-
 class CommandRunner:
+    """
+    gievn a shell command
+    adds a panel to the main window with the following:
+    display the command 
+    buttons to run/kill the command
+    X to remove the pannen, but only if the command is not running
+    multiline text areas for stdout, stderr
+    """
+
     timerCallbacks = []
+    pid=None
     
     def __init__(self, cmd):
         self.cmd = cmd
         self.process = None
         
     def addWidgets(self, parent, topwindow):
-        panel = sc.SizedPanel(parent)
-        panel.SetSizerType('horizontal')
-        panel.SetSizerProps(expand=True)
-        panel.Bind(wx.EVT_END_PROCESS, self.OnProcessEnded)
-        self.panel = panel
-        self.pid=None
 
-        self.txt_cmd = wx.TextCtrl(panel, value=self.cmd, style=wx.TE_READONLY)
+        self.panel = sc.SizedPanel(parent)
+        self.panel.SetSizerType('horizontal')
+        self.panel.SetSizerProps(expand=True)
+        self.panel.Bind(wx.EVT_END_PROCESS, self.OnProcessEnded)
+
+        self.txt_cmd = wx.TextCtrl(self.panel, value=self.cmd, style=wx.TE_READONLY)
         self.txt_cmd.SetForegroundColour(wx.BLUE)
         self.txt_cmd.SetSizerProps(proportion=40, expand=True)
 
-        btn1 = wx.Button(panel, label='Run')
+        btn1 = wx.Button(self.panel, label='Run')
         btn1.Bind(wx.EVT_BUTTON, self.OnRunClicked)
         btn1.SetSizerProps(proportion=5, expand=True)
 
-        btn2 = wx.Button(panel, label='Kill')
+        btn2 = wx.Button(self.panel, label='Kill')
         btn2.Bind(wx.EVT_BUTTON, self.OnKillClicked)
         btn2.SetSizerProps(proportion=5, expand=True)
         
-        btn3 = wx.Button(panel, label='X')
+        btn3 = wx.Button(self.panel, label='X')
         btn3.Bind(wx.EVT_BUTTON, self.OnXClicked)
         btn3.SetSizerProps(proportion=3, expand=True)
         
@@ -153,6 +132,36 @@ class CommandRunner:
 
         print 'Process %s terminated: %s' % (self.pid, self.cmd)
         self.pid=None
+
+def main():
+    app = wx.PySimpleApp()
+    
+    size=wx.GetDisplaySize()
+    print size
+        
+    frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(450, size[1]))
+    
+    panel = frame.GetContentsPane()
+
+    timer = wx.Timer(panel)
+    timer.Start(1000)
+
+    timerCallbacks = []
+    
+    for cmd in COMMANDS:
+        cr = CommandRunner(cmd)
+        cr.addWidgets(panel, frame)
+
+    def OnTimer(evt):
+        for cb in CommandRunner.timerCallbacks:
+            cb(evt)
+
+    panel.Bind(wx.EVT_TIMER, OnTimer)
+
+    frame.Show()
+    # SetSizeHints(minW, minH, maxW, maxH)
+
+    app.MainLoop()
 
 def parse_args():
     parser = argparse.ArgumentParser(description='DVswitch manager.')
