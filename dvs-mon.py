@@ -6,7 +6,7 @@
 import os
 import socket
 
-def mk_commands(opts,args):
+def mk_commands(args):
     # make a list of dirs to search - 
     # use any that have a dv or veyepar dir
     # else find the 'best' one.
@@ -50,8 +50,8 @@ def mk_commands(opts,args):
                 else:
                     print "%s minutes is not enough." % (minutes)
 
-    host = "--host %s" % opts.host if opts.host else ''
-    port = "--port %s" % opts.port if opts.port else ''
+    host = "--host %s" % args.host if args.host else ''
+    port = "--port %s" % args.port if args.port else ''
     hostport = ' '.join([host,port])
 
     hostname=socket.gethostname()
@@ -88,7 +88,7 @@ def mk_commands(opts,args):
     return COMMANDS
 
 ##==============================================================================
-import optparse
+import argparse
 
 import wx
 import wx.lib.sized_controls as sc
@@ -223,21 +223,24 @@ class CommandRunner:
         self.pid=None
 
 def parse_args():
-    parser = optparse.OptionParser()
-    parser.add_option('--host')
-    parser.add_option('-p', '--port')
-    parser.add_option('-v', '--verbose', action="store_true" )
-    parser.add_option('-c', '--commands', 
+    parser = argparse.ArgumentParser(description='DVswitch manager.')
+    parser.add_argument('--host')
+    parser.add_argument('-p', '--port')
+    parser.add_argument('-v', '--verbose', action="store_true" )
+    parser.add_argument('-c', '--commands', nargs="*",
       help="command file" )
 
-    options, args = parser.parse_args()
-    return options, args
+    args = parser.parse_args()
+    print args
+    print args.host
+    return args
 
 if __name__ == '__main__':
-    options, args = parse_args()
-    COMMANDS=mk_commands(options,args)
-    if options.commands:
+    args = parse_args()
+    COMMANDS=mk_commands(args)
+    if args.commands:
+      for cmd_file in args.commands:
         settings = {'COMMANDS':COMMANDS}
-        execfile(options.commands, settings)
+        execfile(cmd_file, settings)
         COMMANDS = settings['COMMANDS']
     main()
