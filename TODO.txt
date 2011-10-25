@@ -1,0 +1,2 @@
+
+in gui, wrap command line so I can see the whole thing when window is too small
