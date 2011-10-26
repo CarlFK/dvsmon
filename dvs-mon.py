@@ -39,31 +39,30 @@ class CommandRunner:
     timerCallbacks = []
     pid=None
     
-    def __init__(self, cmd):
+    def __init__(self, cmd, parent):
+
         self.cmd = cmd
         self.process = None
         
-    def addWidgets(self, parent, topwindow):
-
         self.panel = sc.SizedPanel(parent)
         self.panel.SetSizerType('horizontal')
         self.panel.SetSizerProps(expand=True)
-        self.panel.Bind(wx.EVT_END_PROCESS, self.OnProcessEnded)
+        self.panel.Bind(wx.EVT_END_PROCESS, self.ProcessEnded)
 
         self.txt_cmd = wx.TextCtrl(self.panel, value=self.cmd, style=wx.TE_READONLY)
         self.txt_cmd.SetForegroundColour(wx.BLUE)
         self.txt_cmd.SetSizerProps(proportion=40, expand=True)
 
         btn1 = wx.Button(self.panel, label='Run')
-        btn1.Bind(wx.EVT_BUTTON, self.OnRunClicked)
+        btn1.Bind(wx.EVT_BUTTON, self.RunCmd)
         btn1.SetSizerProps(proportion=5, expand=True)
 
         btn2 = wx.Button(self.panel, label='Kill')
-        btn2.Bind(wx.EVT_BUTTON, self.OnKillClicked)
+        btn2.Bind(wx.EVT_BUTTON, self.Kill)
         btn2.SetSizerProps(proportion=5, expand=True)
         
         btn3 = wx.Button(self.panel, label='X')
-        btn3.Bind(wx.EVT_BUTTON, self.OnXClicked)
+        btn3.Bind(wx.EVT_BUTTON, self.RemovePanel)
         btn3.SetSizerProps(proportion=3, expand=True)
         
         self.panel2 = sc.SizedPanel(parent)
@@ -78,24 +77,42 @@ class CommandRunner:
         self.stderr.SetForegroundColour(wx.RED)
 
         # add to the timer callback list:
-        self.timerCallbacks.append(self.OnTimer)
+        self.timerCallbacks.append(self.ShowIO)
         
-    def OnRunClicked(self, event):
+    def RunCmd(self, event):
         if self.pid is None:
             self.txt_cmd.SetForegroundColour(wx.GREEN)
             self.process = wx.Process(self.panel)
             self.process.Redirect()
             self.pid = wx.Execute(self.cmd, wx.EXEC_ASYNC, self.process)
-            print 'Executed: ' + self.cmd
+            print 'Executed:  %s' % (self.cmd)
             
-    def OnKillClicked(self, event):
+    def Kill(self, event):
         if self.pid:
-            print 'Trying to kill process %d: %s' % (self.pid, self.cmd)
+            print 'Killing: %s' % (self.cmd)
             wx.Process.Kill(self.pid)
             self.pid = None
             self.txt_cmd.SetForegroundColour(wx.BLUE)
         
-    def OnXClicked(self, event):
+           
+    def ShowIO(self, event):
+        if self.process is not None:
+
+            stream = self.process.GetInputStream()
+            while stream.CanRead():
+                line = stream.read()
+                line = line.strip()
+                # print "O", line.__repr__()
+                self.stdout.AppendText("\n"+line)
+
+            stream = self.process.GetErrorStream()
+            while stream.CanRead():
+                line = stream.read()
+                line = line.strip()
+                # print "E", line.__repr__()
+                self.stderr.AppendText("\n"+line)
+
+    def RemovePanel(self, event):
         # remove this command to make room for the stuff we care about
         if self.pid is None:
             parent=self.panel.GetTopLevelParent() # Parent
@@ -104,24 +121,11 @@ class CommandRunner:
             self.stderr.Destroy() 
             self.panel2.Destroy() 
             parent.SendSizeEvent()
-            
-    def OnTimer(self, event):
-        if self.process is not None:
-            stream = self.process.GetInputStream()
-            if stream.CanRead():
-                self.stdout.AppendText("\n"+stream.read().strip())
-
-            stream = self.process.GetErrorStream()
-            if stream.CanRead():
-                self.stderr.AppendText("\n"+stream.read().strip())
-
-    def OnProcessEnded(self, event):
+ 
+    def ProcessEnded(self, event):
         if self.pid:
             self.txt_cmd.SetForegroundColour(wx.RED)
-        stream = self.process.GetInputStream()
-
-        if stream.CanRead():
-            self.stdout.AppendText(stream.read())
+            self.ShowIO(event)
 
         self.process.Destroy()
         self.process = None
@@ -138,8 +142,7 @@ def main():
     panel = frame.GetContentsPane()
 
     for cmd in COMMANDS:
-        cr = CommandRunner(cmd)
-        cr.addWidgets(panel, frame)
+        cr = CommandRunner(cmd, panel)
 
     def OnTimer(evt):
         for cb in CommandRunner.timerCallbacks:

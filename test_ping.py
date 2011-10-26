@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 COMMANDS+=[ 
-    'ping -c 5 localhost',
+    'ping -i .3 127.0.0.1',
+    'ping -i 1 127.0.0.1',
     'ping localhost',
-    'ping 127.0.0.1',
-    'ping 127.0.0.1',
+    'ping -c 5 localhost',
 ]
 
 
