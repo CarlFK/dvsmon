@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import argparse
-import subprocess
 
 import wx
 import wx.lib.sized_controls as sc
@@ -95,7 +94,7 @@ class CommandRunner:
             self.txt_cmd.SetForegroundColour(wx.BLUE)
         
            
-    def ShowIO(self, event):
+    def ShowIO(self):
         if self.process is not None:
 
             stream = self.process.GetInputStream()
@@ -125,7 +124,7 @@ class CommandRunner:
     def ProcessEnded(self, event):
         if self.pid:
             self.txt_cmd.SetForegroundColour(wx.RED)
-            self.ShowIO(event)
+            self.ShowIO()
 
         self.process.Destroy()
         self.process = None
@@ -137,23 +136,21 @@ def main():
     app = wx.PySimpleApp()
     
     size=wx.GetDisplaySize()
-    # print size
     frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(450, size[1]))
     panel = frame.GetContentsPane()
 
     for cmd in COMMANDS:
         cr = CommandRunner(cmd, panel)
 
+    frame.Show()
+
     def OnTimer(evt):
         for cb in CommandRunner.timerCallbacks:
-            cb(evt)
+            cb()
 
     panel.Bind(wx.EVT_TIMER, OnTimer)
     timer = wx.Timer(panel)
     timer.Start(1000)
-
-    frame.Show()
-    # SetSizeHints(minW, minH, maxW, maxH)
 
     app.MainLoop()
 
