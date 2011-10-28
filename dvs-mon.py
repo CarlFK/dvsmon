@@ -5,8 +5,8 @@ import argparse
 import wx
 import wx.lib.sized_controls as sc
 
-
 class CommandRunner(object):
+
     """
     gievn a shell command
     adds a panel to the main window with the following:
@@ -24,35 +24,42 @@ class CommandRunner(object):
         self.cmd = cmd
         self.process = None
         
-        self.panel = sc.SizedPanel(parent)
+        # outer panel to hold the 3 parts:
+        #  cmd+ctrls, stdout, stderr
+        self.panel_out = sc.SizedPanel(parent)
+        self.panel_out.SetSizerType('vertical')
+        self.panel_out.SetSizerProps(expand=True)
+
+        # self.panel = sc.SizedPanel(parent)
+        self.panel = sc.SizedPanel(self.panel_out)
         self.panel.SetSizerType('horizontal')
         self.panel.SetSizerProps(expand=True)
         self.panel.Bind(wx.EVT_END_PROCESS, self.ProcessEnded)
 
         self.txt_cmd = wx.TextCtrl(self.panel, value=self.cmd, style=wx.TE_READONLY)
-        self.txt_cmd.SetForegroundColour(wx.BLUE)
         self.txt_cmd.SetSizerProps(proportion=40, expand=True)
+        self.txt_cmd.SetForegroundColour(wx.BLUE)
 
-        btn1 = wx.Button(self.panel, label='Run')
+        btn1 = wx.Button(self.panel, label='Run', size=(45, -1))
         btn1.Bind(wx.EVT_BUTTON, self.RunCmd)
-        btn1.SetSizerProps(proportion=5, expand=True)
 
-        btn2 = wx.Button(self.panel, label='Kill')
+        btn2 = wx.Button(self.panel, label='Kill', size=(45,-1))
         btn2.Bind(wx.EVT_BUTTON, self.Kill)
-        btn2.SetSizerProps(proportion=5, expand=True)
         
-        btn3 = wx.Button(self.panel, label='X')
+        btn3 = wx.Button(self.panel, label='X', size=(25,-1))
         btn3.Bind(wx.EVT_BUTTON, self.RemovePanel)
-        btn3.SetSizerProps(proportion=3, expand=True)
         
-        self.panel2 = sc.SizedPanel(parent)
-        self.panel2.SetSizerType('vertical')
-        self.panel2.SetSizerProps(expand=True, proportion=2)
+        # self.panel2 = sc.SizedPanel(self.panel)
+        # self.panel2 = sc.SizedPanel(parent)
+        # self.panel2.SetSizerType('vertical')
+        # self.panel2.SetSizerProps(expand=True, proportion=2)
+        # self.stdout = wx.TextCtrl( self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
 
-        self.stdout = wx.TextCtrl( self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
+        self.stdout = wx.TextCtrl( self.panel_out, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stdout.SetSizerProps(proportion=1, expand=True)
 
-        self.stderr = wx.TextCtrl(self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
+        # self.stderr = wx.TextCtrl(self.panel2, style=wx.TE_READONLY|wx.TE_MULTILINE)
+        self.stderr = wx.TextCtrl( self.panel_out, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stderr.SetSizerProps(proportion=1, expand=True)
         self.stderr.SetForegroundColour(wx.RED)
 
@@ -99,7 +106,7 @@ class CommandRunner(object):
             self.panel.Destroy() 
             self.stdout.Destroy() 
             self.stderr.Destroy() 
-            self.panel2.Destroy() 
+            self.panel_out.Destroy() 
             parent.SendSizeEvent()
  
     def ProcessEnded(self, event):
