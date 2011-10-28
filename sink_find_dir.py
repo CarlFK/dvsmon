@@ -54,6 +54,8 @@ hostname=socket.gethostname()
 # add output dirs 
 for vid_dir in vid_dirs:
     COMMANDS.append(
-      'dvsink-files %s %s' % ( hostport, 
-        os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' )))
+      'dvsink-files %s %s' % ( 
+        os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' ),
+          hostport, 
+           ))
 

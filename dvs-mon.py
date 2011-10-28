@@ -6,26 +6,7 @@ import wx
 import wx.lib.sized_controls as sc
 
 
-def mk_commands(args):
-
-    host = "--host %s" % args.host if args.host else ''
-    port = "--port %s" % args.port if args.port else ''
-    hostport = ' '.join([host,port])
-
-    COMMANDS = [ ]
-    # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 0' % (hostport,),
-    # 'ssh juser@169.254.13.180 dvsource-firewire %s -c 1' % (hostport,),
-
-    for cmd_file in args.commands:
-        execfile(cmd_file, locals())
-
-    # strip trailing spaces which get passed as a parameter.
-    COMMANDS = [cmd.strip() for cmd in COMMANDS]
-
-    return COMMANDS
-
-
-class CommandRunner:
+class CommandRunner(object):
     """
     gievn a shell command
     adds a panel to the main window with the following:
@@ -132,14 +113,48 @@ class CommandRunner:
         print 'Process %s terminated: %s' % (self.pid, self.cmd)
         self.pid=None
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='DVswitch manager.')
+    parser.add_argument('--host')
+    parser.add_argument('-p', '--port')
+    parser.add_argument('-v', '--verbose', action="store_true" )
+    parser.add_argument('-c', '--commands', nargs="*",
+      help="command file" )
+
+    args = parser.parse_args()
+    return args
+
+def mk_commands(args):
+
+    host = "--host %s" % args.host if args.host else ''
+    port = "--port %s" % args.port if args.port else ''
+    hostport = ' '.join([host,port])
+
+    # COMMANDS is caps cuz it is global
+    # cuz I am not sure how to api the plugin like thing
+    # where I use execfile() - it works.
+    COMMANDS = [ ]
+
+    for cmd_file in args.commands:
+        execfile(cmd_file, locals())
+
+    # strip trailing spaces which get passed as a parameter.
+    commands = [cmd.strip() for cmd in COMMANDS]
+
+    return commands
+
 def main():
+    
+    args = parse_args()
+    commands=mk_commands(args)
+    
     app = wx.PySimpleApp()
     
     size=wx.GetDisplaySize()
     frame = sc.SizedFrame(None, title='dvs-mon',  pos=(1,1), size=(450, size[1]))
     panel = frame.GetContentsPane()
 
-    for cmd in COMMANDS:
+    for cmd in commands:
         cr = CommandRunner(cmd, panel)
 
     frame.Show()
@@ -154,18 +169,5 @@ def main():
 
     app.MainLoop()
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='DVswitch manager.')
-    parser.add_argument('--host')
-    parser.add_argument('-p', '--port')
-    parser.add_argument('-v', '--verbose', action="store_true" )
-    parser.add_argument('-c', '--commands', nargs="*",
-      help="command file" )
-
-    args = parser.parse_args()
-    return args
-
 if __name__ == '__main__':
-    args = parse_args()
-    COMMANDS=mk_commands(args)
     main()
