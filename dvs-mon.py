@@ -48,8 +48,11 @@ class CommandRunner(object):
         btn2 = wx.Button(panel_cmd, label='Kill', size=(45,-1))
         btn2.Bind(wx.EVT_BUTTON, self.Kill)
         
-        btn3 = wx.Button(panel_cmd, label='X', size=(25,-1))
-        btn3.Bind(wx.EVT_BUTTON, self.RemovePanel)
+        btn3 = wx.Button(panel_cmd, label='Detail', size=(45,-1))
+        btn3.Bind(wx.EVT_BUTTON, self.Detail)
+        
+        btn4 = wx.Button(panel_cmd, label='X', size=(25,-1))
+        btn4.Bind(wx.EVT_BUTTON, self.RemovePanel)
         
         # sdtout
         stdout = wx.TextCtrl( 
@@ -117,6 +120,18 @@ class CommandRunner(object):
         print 'Process %s terminated: %s' % (self.pid, self.cmd)
         self.pid=None
 
+    def Detail(self, event):
+        # show/hide stdout/err
+        self.stdout.SetMaxSize((-1,1))
+        self.stderr.SetMaxSize((-1,1))
+        self.panel_cr.SendSizeEvent()
+
+        # parent=self.stderr.GetTopLevelParent() 
+        # parent.SendSizeEvent()
+        # parent=parent.GetTopLevelParent() 
+        parent=self.panel_cr.GetTopLevelParent() 
+        # parent.SendSizeEvent()
+        
     def RemovePanel(self, event):
         # remove this command to make room for the stuff we care about
         if self.pid is None:
