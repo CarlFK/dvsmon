@@ -21,13 +21,13 @@ class CommandRunner(object):
     detail = False
     keepalive = False
     
-    def __init__(self, pain, i, cmd, args):
+    def __init__(self, pain, startdelay, cmd, args):
 
         self.cmd = cmd
         if args.keepalive:
-            self.keepalive = int(args.keepalive)
+            self.keepalive = args.keepalive
             # extra delay to spread out startup
-            self.deadtime = int(args.keepalive) * (i+1)/2
+            self.deadtime = startdelay
         else:
             self.keepalive = False
         
@@ -94,6 +94,7 @@ class CommandRunner(object):
             self.process.Redirect()
             self.pid = wx.Execute(
                     self.cmd, wx.EXEC_ASYNC, self.process)
+            self.MarkOuts("Started.")
             print 'Executed:  %s' % (self.cmd)
             
     def Kill(self, event):
@@ -101,6 +102,7 @@ class CommandRunner(object):
             self.MarkOuts("Killing...")
             print 'Killing: %s' % (self.cmd)
             wx.Process.Kill(self.pid)
+            self.MarkOuts("Killed.")
             self.pid = None
             self.txt_cmd.SetForegroundColour(wx.BLUE)
             self.keepalive = 0
@@ -119,8 +121,8 @@ class CommandRunner(object):
  
     def KeepAlive(self):
         if self.deadtime:
+            # If process died, leave it dead for X timer cycles
             self.deadtime-=1
-            print self.deadtime
         else:
             self.RunCmd()
 
@@ -137,9 +139,9 @@ class CommandRunner(object):
 
         self.process.Destroy()
         self.process = None
+        self.pid = None
 
-        print 'Process %s terminated: %s' % (self.pid, self.cmd)
-        self.pid=None
+        print 'DIED: %s' % (self.cmd)
         self.deadtime = self.keepalive
 
 
@@ -147,11 +149,18 @@ class CommandRunner(object):
         # show/hide stdout/err
 
         if self.detail: 
+            # remove detail from display
             # squish
             self.panel_cr.SetSizerProps(proportion=1, expand=True)
+            # size=(-1,20)
         else: 
+            # show detail on display
             # restore to normal size
             self.panel_cr.SetSizerProps(proportion=10, expand=True)
+            # size=(-1,-1)
+
+        # self.stdout.SetMaxSize(size)
+        # self.stderr.SetMaxSize(size)
 
         parent=self.panel_cr.GetTopLevelParent() 
         parent.SendSizeEvent()
@@ -195,9 +204,9 @@ def mk_commands(args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='DVswitch manager.')
-    parser.add_argument('--host')
-    parser.add_argument('-p', '--port')
-    parser.add_argument('-k', '--keepalive', )
+    parser.add_argument('--host' )
+    parser.add_argument('-p', '--port' )
+    parser.add_argument('-k', '--keepalive', type=int )
     parser.add_argument('-c', '--commands', nargs="*",
       help="command file" )
     parser.add_argument('-v', '--verbose', action="store_true" )
@@ -218,9 +227,11 @@ def main():
     pain = frame.GetContentsPane()
 
     crs = []
-    for i, cmd in enumerate(commands):
-        cr = CommandRunner( pain, i, cmd, args )
+    startdelay=args.keepalive
+    for cmd in commands:
+        cr = CommandRunner( pain, startdelay, cmd, args )
         crs.append(cr)
+        startdelay+=args.keepalive/2
 
     cr.Detail(cr)
     frame.Show()
