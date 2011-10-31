@@ -227,6 +227,8 @@ def parse_args():
     parser.add_argument('-k', '--keepalive', type=int )
     parser.add_argument('-c', '--commands', nargs="*",
       help="command file" )
+    parser.add_argument('-s', '--show-all-detail', action="store_true" ,
+            default=False)
     parser.add_argument('-v', '--verbose', action="store_true" )
 
     args = parser.parse_args()
@@ -247,7 +249,10 @@ def main():
     startdelay=args.keepalive
     for cmd in commands:
         cr = CommandRunner( frame, startdelay, cmd, args )
-        cr.Detail(cr,show=False)
+        if args.show_all_detail:
+            cr.Detail(cr,show=True)
+        else:
+            cr.Detail(cr,show=False)
         if args.keepalive is not None:
             startdelay+=args.keepalive/2
 
