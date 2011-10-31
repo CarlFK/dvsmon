@@ -4,7 +4,8 @@ import argparse
 import time
 
 import wx
-import wx.lib.sized_controls as sc
+# import wx.lib.sized_controls as sc
+# import wx.lib.inspection
 
 class CommandRunner(object):
 
@@ -18,12 +19,14 @@ class CommandRunner(object):
     """
 
     process = None
-    detail = False
+    detail = True
     keepalive = False
     
-    def __init__(self, pain, startdelay, cmd, args):
+    def __init__(self, frame, startdelay, cmd, args):
 
         self.cmd = cmd
+        self.frame = frame
+
         if args.keepalive:
             self.keepalive = args.keepalive
             # extra delay to spread out startup
@@ -33,52 +36,87 @@ class CommandRunner(object):
         
         # outer panel to hold the 3 parts:
         #  cmd+buttons, stdout, stderr
-        panel_cr = sc.SizedPanel(pain)
-        panel_cr.SetSizerType('vertical')
-        panel_cr.SetSizerProps(proportion=1, expand=True)
-        panel_cr.Bind(wx.EVT_END_PROCESS, self.ProcessEnded)
+
+        panel_cr = wx.Panel(frame)
+        panel_cr.Sizer = wx.BoxSizer(wx.VERTICAL)
+        self.cr_sizer = frame.Sizer.Add(panel_cr, 1, wx.EXPAND)
         self.panel_cr = panel_cr
 
+        panel_cr.Bind(wx.EVT_END_PROCESS, self.ProcessEnded)
+
         # cmd+buttons
-        panel_cmd = sc.SizedPanel(panel_cr)
-        panel_cmd.SetSizerType('horizontal')
-        panel_cmd.SetSizerProps(expand=True)
+        panel_cmd = wx.Panel(panel_cr)
+        panel_cmd.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel_cr.Sizer.Add(panel_cmd, 0, wx.EXPAND)
+
+        self.panel_cmd = panel_cmd
 
         self.txt_cmd = wx.TextCtrl(
                 panel_cmd, value=self.cmd, style=wx.TE_READONLY)
-        self.txt_cmd.SetSizerProps(proportion=1, expand=True)
         self.txt_cmd.SetForegroundColour(wx.BLUE)
+        panel_cmd.Sizer.Add(self.txt_cmd, 1, wx.EXPAND)
 
         btn1 = wx.Button(panel_cmd, label='Run', size=(45, -1))
+        panel_cmd.Sizer.Add(btn1, 0, wx.EXPAND)
         btn1.Bind(wx.EVT_BUTTON, self.RunCmd)
 
         btn2 = wx.Button(panel_cmd, label='Kill', size=(45,-1))
+        panel_cmd.Sizer.Add(btn2, 0, wx.EXPAND)
         btn2.Bind(wx.EVT_BUTTON, self.Kill)
         
-        btn3 = wx.Button(panel_cmd, label='Detail', size=(50,-1))
+        btn3 = wx.Button(panel_cmd, label='Detail', size=(60,-1))
+        panel_cmd.Sizer.Add(btn3, 0, wx.EXPAND)
         btn3.Bind(wx.EVT_BUTTON, self.Detail)
         
         btn4 = wx.Button(panel_cmd, label='X', size=(25,-1))
+        panel_cmd.Sizer.Add(btn4, 0, wx.EXPAND)
         btn4.Bind(wx.EVT_BUTTON, self.RemovePanel)
         
         # sdtout
         stdout = wx.TextCtrl( 
                 panel_cr, style=wx.TE_READONLY|wx.TE_MULTILINE)
-        stdout.SetSizerProps(proportion=1, expand=True)
+        self.stdout_sizer = panel_cr.Sizer.Add(stdout, 1, wx.EXPAND)
         self.stdout = stdout
 
         # stderr
         stderr = wx.TextCtrl( 
                 panel_cr, style=wx.TE_READONLY|wx.TE_MULTILINE)
-        stderr.SetSizerProps(proportion=1, expand=True)
+        self.stdout_sizer = panel_cr.Sizer.Add(stderr, 1, wx.EXPAND)
         stderr.SetForegroundColour(wx.RED)
         self.stderr = stderr
 
+        # start a timer to check for stdout/err 
         panel_cr.Bind(wx.EVT_TIMER, self.OnTimer)
-        self.timer = wx.Timer( panel_cr )
+        self.timer = wx.Timer( panel_cr)
         self.timer.Start(100)
 
-        
+ 
+    def Detail(self, event=None, show=None):
+        # show/hide stdout/err
+
+        if show is None:
+            # flip state 
+            self.detail = not self.detail
+        else:
+            self.detail = show
+
+        if self.detail: 
+            # show detail on display
+            # restore to normal size
+            self.stdout.Show()
+            self.stderr.Show()
+            self.cr_sizer.SetProportion(1)
+        else: 
+            # remove detail from display
+            # squish
+            self.stdout.Hide()
+            self.stderr.Hide()
+            self.cr_sizer.SetProportion(0)
+
+        self.frame.Layout()
+        self.frame.Refresh()
+
+       
     def AppendLine(self, ctrl, line):
         ctrl.AppendText("\n"+line)
 
@@ -134,39 +172,18 @@ class CommandRunner(object):
     def ProcessEnded(self, event):
         if self.process is not None:
             self.txt_cmd.SetForegroundColour(wx.RED)
+            # make sure there is no more stdout/err
             self.ShowIO()
             self.MarkOuts("DIED!")
+            # expand the UI
+            self.Detail(show=True)
 
-        self.process.Destroy()
         self.process = None
         self.pid = None
 
         print 'DIED: %s' % (self.cmd)
         self.deadtime = self.keepalive
 
-
-    def Detail(self, event=None):
-        # show/hide stdout/err
-
-        if self.detail: 
-            # remove detail from display
-            # squish
-            self.panel_cr.SetSizerProps(proportion=1, expand=True)
-            # size=(-1,20)
-        else: 
-            # show detail on display
-            # restore to normal size
-            self.panel_cr.SetSizerProps(proportion=10, expand=True)
-            # size=(-1,-1)
-
-        # self.stdout.SetMaxSize(size)
-        # self.stderr.SetMaxSize(size)
-
-        parent=self.panel_cr.GetTopLevelParent() 
-        parent.SendSizeEvent()
-        
-        # flip state for next time
-        self.detail = not self.detail
         
     def RemovePanel(self, event):
         if self.process is None:
@@ -194,7 +211,8 @@ def mk_commands(args):
             'ping -i .3 127.0.0.1',
             'ping -i 1 127.0.0.1',
             'ping localhost',
-            'ping -c 5 localhost',
+            'ping -c 5 -i .5 localhost',
+            'ping -h',
         ]
 
     # strip trailing spaces which get passed as a parameter.
@@ -221,21 +239,25 @@ def main():
     
     app = wx.PySimpleApp()
     
-    size=wx.GetDisplaySize()
-    frame = sc.SizedFrame(
+    size = wx.GetDisplaySize()
+    frame = wx.Frame(
             None, title='dvs-mon',  pos=(1,1), size=(450, size[1]-100))
-    pain = frame.GetContentsPane()
+    frame.Sizer = wx.BoxSizer(wx.VERTICAL)
 
-    crs = []
     startdelay=args.keepalive
     for cmd in commands:
-        cr = CommandRunner( pain, startdelay, cmd, args )
-        crs.append(cr)
-        startdelay+=args.keepalive/2
+        cr = CommandRunner( frame, startdelay, cmd, args )
+        cr.Detail(cr,show=False)
+        if args.keepalive is not None:
+            startdelay+=args.keepalive/2
 
-    cr.Detail(cr)
+    # show stdout/err of last command:
+    cr.Detail(cr,show=True)
+
     frame.Show()
 
+    # wx.lib.inspection.InspectionTool().Show()
+    
     app.MainLoop()
 
 if __name__ == '__main__':
