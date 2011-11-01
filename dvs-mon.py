@@ -158,16 +158,16 @@ class CommandRunner(object):
             one(self.process.GetErrorStream(), self.stderr)
  
     def KeepAlive(self):
-        if self.deadtime:
-            # If process died, leave it dead for X timer cycles
-            self.deadtime-=1
-        else:
-            self.RunCmd()
+        if self.keepalive:
+            if self.deadtime:
+                # If process died, leave it dead for X timer cycles
+                self.deadtime-=1
+            else:
+                self.RunCmd()
 
     def OnTimer(self,event):
         self.ShowIO()
-        if self.keepalive:
-            self.KeepAlive()
+        self.KeepAlive()
 
     def ProcessEnded(self, event):
         if self.process is not None:
