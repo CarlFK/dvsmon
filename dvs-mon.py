@@ -10,7 +10,7 @@ import wx
 class CommandRunner(object):
 
     """
-    gievn a shell command
+    given a shell command
     adds a panel to the main window with the following:
     display the command 
     buttons to run/kill the command
@@ -199,6 +199,8 @@ class CommandRunner(object):
     def RemovePanel(self, event):
         if self.process is None:
             parent=self.panel_cr.GetTopLevelParent() 
+            self.timer.Stop()
+            self.timer.Destroy()
             self.panel_cr.Destroy() 
             parent.SendSizeEvent()
 
@@ -250,7 +252,7 @@ def main():
     args = parse_args()
     commands=mk_commands(args)
     
-    app = wx.PySimpleApp()
+    app = wx.App(False)
     
     size = wx.GetDisplaySize()
     frame = wx.Frame(
