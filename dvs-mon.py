@@ -39,7 +39,7 @@ class CommandRunner(object):
 
         panel_cr = wx.Panel(frame)
         panel_cr.Sizer = wx.BoxSizer(wx.VERTICAL)
-        self.cr_sizer = frame.Sizer.Add(panel_cr, 1, wx.EXPAND)
+        self.cr_sizer = frame.Sizer.Add(panel_cr, 10, wx.EXPAND)
         self.panel_cr = panel_cr
 
         panel_cr.Bind(wx.EVT_END_PROCESS, self.ProcessEnded)
@@ -81,7 +81,7 @@ class CommandRunner(object):
         # stderr
         stderr = wx.TextCtrl( 
                 panel_cr, style=wx.TE_READONLY|wx.TE_MULTILINE)
-        self.stdout_sizer = panel_cr.Sizer.Add(stderr, 1, wx.EXPAND)
+        self.stderr_sizer = panel_cr.Sizer.Add(stderr, 1, wx.EXPAND)
         stderr.SetForegroundColour(wx.RED)
         self.stderr = stderr
 
@@ -100,15 +100,26 @@ class CommandRunner(object):
         else:
             self.detail = show
 
+
+        def animate(sequence):
+            for i in sequence:
+                self.cr_sizer.SetProportion(i)
+                self.frame.Layout()
+                self.frame.Update()
+                wx.Yield()
+
         if self.detail: 
             # show detail on display
             # restore to normal size
             self.stdout.Show()
             self.stderr.Show()
-            self.cr_sizer.SetProportion(1)
+            animate(range(1, 11))
+            # self.cr_sizer.SetProportion(1)
+
         else: 
             # remove detail from display
             # squish
+            animate(reversed(range(1, 11)))
             self.stdout.Hide()
             self.stderr.Hide()
             self.cr_sizer.SetProportion(0)
