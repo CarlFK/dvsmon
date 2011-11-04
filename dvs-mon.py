@@ -98,7 +98,11 @@ class CommandRunner(object):
             # flip state 
             self.detail = not self.detail
         else:
-            self.detail = show
+            if self.detail == show:
+                # nothing to do, don't animate, it looks weird.
+                return 
+            else:
+                self.detail = show
 
 
         def animate(sequence):

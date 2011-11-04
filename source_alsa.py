@@ -14,7 +14,7 @@ carl@dc10:~/src/dvs/dvswitch/src$ cat /proc/asound/cards
                       C-Media Electronics Inc. USB PnP Audio Device at usb-0000:00:1d.0-1.2, full spe
 """
 
-# COMMANDS.append( 'dvsource-alsa -s ntsc -r 48000 hw:1 %s' % (hostport,))
-COMMANDS.append( 'dvsource-alsa -s ntsc -r 48000 hw:0 %s' % (hostport,))
+COMMANDS.append( 'dvsource-alsa -s ntsc -r 48000 hw:1 %s' % (hostport,))
+# COMMANDS.append( 'dvsource-alsa -s ntsc -r 48000 hw:0 %s' % (hostport,))
 
 
