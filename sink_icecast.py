@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
-COMMANDS.append( 'ffmpeg -f video4linux2 -s 1024x768 -i /dev/video0 -target ntsc-dv -y - | dvsource-file /dev/stdin %s' % (hostport,))
+# pipe doesn't work ...
+
+COMMANDS.append( 
+ 'dvsink-command -- ffmpeg2theora - -f dv -F 25:5 --speedlevel 0 -v 4 -a 0 -c 1 -H 9600 -o - | oggfwd giss.tv 8001 $STREAMPW /CarlFK.ogg'
+ % (hostport,))
 
 

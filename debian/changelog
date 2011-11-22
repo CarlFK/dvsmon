@@ -1,3 +1,9 @@
+dvsmon (1.2-1ubuntu1) oneiric; urgency=low
+
+  *  hide details 
+
+ -- Carl Karsten <carl@personnelware.com>  Tue, 15 Nov 2011 06:45:16 -0600
+
 dvsmon (1.1-2ubuntu3) maverick; urgency=low
 
   * tweek debian/control for natty - python-all-dev

@@ -228,6 +228,7 @@ def mk_commands(args):
             'ping -i .3 127.0.0.1',
             'ping -i 1 127.0.0.1',
             'ping localhost',
+            'ssh localhost ping localhost',
             'ping -c 5 -i .5 localhost',
             'ping -h',
         ]
