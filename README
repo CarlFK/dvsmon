@@ -10,9 +10,13 @@ Finds the test-123.dv files.
 Other than that, it just runs commands and displays their output.  
 See the dvswitch docs for descriptions of the dvswitch commands.
 
-Can be installed from:
-https://edge.launchpad.net/~carlfk/+archive/ppa
+To test the app (using ping instead of dvswitch):
+./dvs-mon.py 
 
-to test the app (using ping instead of dvswitch):
-./dvs-mon.py -c test_ping.py 
+To run in production:
+./prod.sh
+
+docs:
+./dvs-mon.py --help
+
 
