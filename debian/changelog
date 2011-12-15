@@ -1,3 +1,12 @@
+dvsmon (1.3-0ubuntu0) oneiric; urgency=low
+
+  * animate detail explosion
+  * move dvswitch command construction into plugins
+  * move ping test code into main app for ease of testing
+  * add scripts that use a set of plugins for testing and production
+
+ -- Carl Karsten <carl@personnelware.com>  Wed, 07 Dec 2011 09:46:23 -0600
+
 dvsmon (1.2-1ubuntu1) oneiric; urgency=low
 
   *  hide details 

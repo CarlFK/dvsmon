@@ -7,6 +7,9 @@ import wx
 # import wx.lib.sized_controls as sc
 # import wx.lib.inspection
 
+import subprocess
+import select
+
 class CommandRunner(object):
 
     """
@@ -99,9 +102,12 @@ class CommandRunner(object):
             self.detail = not self.detail
         else:
             if self.detail == show:
-                # nothing to do, don't animate, it looks weird.
+                # already in desired satte.  nothing to do.
                 return 
             else:
+                # this is also flipping the state.
+                # this whole nexted if could be reduced to 4 lines.
+                # not sure if all this code/comments is better or worse
                 self.detail = show
 
 
@@ -143,10 +149,18 @@ class CommandRunner(object):
         if self.process is None:
             self.MarkOuts("Starting...")
             self.txt_cmd.SetForegroundColour(wx.GREEN)
+
+            """
             self.process = wx.Process(self.panel_cr)
             self.process.Redirect()
             self.pid = wx.Execute(
-                    self.cmd, wx.EXEC_ASYNC, self.process)
+            self.cmd, wx.EXEC_ASYNC, self.process)
+            """
+
+            cmd = self.cmd.split()
+            self.process = subprocess.Popen(cmd, 
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+
             self.MarkOuts("Started.")
             print 'Executed:  %s' % (self.cmd)
             
@@ -161,6 +175,8 @@ class CommandRunner(object):
             self.keepalive = 0
            
     def ShowIO(self):
+        # select.select(...)
+        # select.poll(...)
         if self.process is not None:
 
             def one(stream,ctrl):
@@ -169,8 +185,17 @@ class CommandRunner(object):
                 line = line.strip()
                 self.AppendLine(ctrl,line)
 
-            one(self.process.GetInputStream(), self.stdout)
-            one(self.process.GetErrorStream(), self.stderr)
+            # select.select(rlist, wlist, xlist[, timeout])
+            rlist, wlist, xlist = select.select([self.process.stdout], [], [], 0)
+            for r in rlist:
+                print "reading"
+                line = r.read()
+                print "read"
+                print line
+
+
+            # one(self.process.GetInputStream(), self.stdout)
+            # one(self.process.GetErrorStream(), self.stderr)
  
     def KeepAlive(self):
         if self.keepalive:
@@ -220,6 +245,7 @@ def mk_commands(args):
 
     if args.commands:
         COMMANDS = [ ]
+        # args.commands = list of .py files that COMMANDS.apppend(command)
         for cmd_file in args.commands:
             execfile(cmd_file, locals())
     else:
