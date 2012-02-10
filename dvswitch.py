@@ -1,5 +1,5 @@
 #!/usr/bin/python
 
-COMMANDS.append( 'dvswitch %s' % (hostport,))
+COMMANDS.append( Command('dvswitch %s' % (hostport,)))
 
 

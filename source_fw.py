@@ -1,5 +1,5 @@
 #!/usr/bin/python
 
-COMMANDS.append( 'dvsource-firewire %s' % (hostport,))
+COMMANDS.append( Command('dvsource-firewire %s' % (hostport,)))
 
 
