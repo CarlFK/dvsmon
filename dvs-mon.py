@@ -7,6 +7,8 @@ import wx
 # import wx.lib.sized_controls as sc
 # import wx.lib.inspection
 
+DARKGREEN = wx.Colour(0,196,0)
+
 class CommandRunner(object):
 
     """
@@ -53,7 +55,8 @@ class CommandRunner(object):
 
         self.txt_cmd = wx.TextCtrl(
                 panel_cmd, value=self.cmd.label, style=wx.TE_READONLY)
-        self.txt_cmd.SetForegroundColour(wx.BLUE)
+        self.txt_cmd.SetForegroundColour(wx.WHITE)
+        self.txt_cmd.SetBackgroundColour(wx.BLUE)
         panel_cmd.Sizer.Add(self.txt_cmd, 1, wx.EXPAND)
 
         btn1 = wx.Button(panel_cmd, label='Run', size=(45, -1))
@@ -142,7 +145,7 @@ class CommandRunner(object):
     def RunCmd(self, event=None):
         if self.process is None:
             self.MarkOuts("Starting...")
-            self.txt_cmd.SetForegroundColour(wx.GREEN)
+            self.txt_cmd.SetBackgroundColour(DARKGREEN)
             self.process = wx.Process(self.panel_cr)
             self.process.Redirect()
             self.pid = wx.Execute(
@@ -157,7 +160,7 @@ class CommandRunner(object):
             wx.Process.Kill(self.pid)
             self.MarkOuts("Killed.")
             self.pid = None
-            self.txt_cmd.SetForegroundColour(wx.BLUE)
+            self.txt_cmd.SetBackgroundColour(wx.BLUE)
             self.keepalive = 0
 
     def ShowIO(self):
@@ -186,7 +189,7 @@ class CommandRunner(object):
 
     def ProcessEnded(self, event):
         if self.process is not None:
-            self.txt_cmd.SetForegroundColour(wx.RED)
+            self.txt_cmd.SetBackgroundColour(wx.RED)
             # make sure there is no more stdout/err
             self.ShowIO()
             self.MarkOuts("DIED!")
