@@ -6,21 +6,21 @@
 import os
 import socket
 
-# make a list of dirs to search - 
+# make a list of dirs to search -
 # use any that have a dv or veyepar dir
 # else find the 'best' one.
 # home dir
 dirs  = [os.path.expanduser('~/Videos/veyepar')]
 # anyting mounted under /media with a Videos/veyepar dir
 dirs += ["/media/%s/Videos/veyepar"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
-# can't find a veyepar dir. now start looking for anything reasonable. 
+# can't find a veyepar dir. now start looking for anything reasonable.
 # someday maybe search for something with the most free space.
 dirs += ["/media/%s/Videos"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
 dirs += [os.path.expanduser('~/Videos')]
 # rom excludes cdrom cdrom-1 or any other rom.
-dirs += ["/media/%s"%dir 
+dirs += ["/media/%s"%dir
     for dir in os.listdir('/media') \
-        if (dir[0]!='.' 
+        if (dir[0]!='.'
             and 'rom' not in dir
             and 'floppy' not in dir) ]
 # if we get here, I hope it isn't the live CD.
@@ -32,7 +32,7 @@ vid_dirs=[]
 for vid_dir in dirs:
     print "checking", vid_dir
     if os.path.exists(vid_dir):
-        print "found, checking for write perms..." 
+        print "found, checking for write perms..."
         w_perm = os.access(vid_dir, os.W_OK)
         print 'os.access("%s", os.W_OK): %s'%( vid_dir, w_perm )
         if w_perm:
@@ -51,11 +51,11 @@ for vid_dir in dirs:
 
 hostname=socket.gethostname()
 
-# add output dirs 
+# add output dirs
 for vid_dir in vid_dirs:
     COMMANDS.append(
-      'dvsink-files %s %s' % ( 
-        os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' ),
-          hostport, 
-           ))
+        Command('dvsink-files %s %s' % (
+                os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' ),
+                hostport,
+                )))
 

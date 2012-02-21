@@ -12,7 +12,7 @@ hostport = ' '.join([master,port])
 slave = 'juser@kasp'
 
 COMMANDS.append(
- 'ssh %s dvsource-firewire -c 0 %s' % (slave, hostport,),
+ Command('ssh %s dvsource-firewire -c 0 %s' % (slave, hostport,))
 )
 
 

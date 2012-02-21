@@ -7,12 +7,14 @@ import wx
 # import wx.lib.sized_controls as sc
 # import wx.lib.inspection
 
+DARKGREEN = wx.Colour(0,196,0)
+
 class CommandRunner(object):
 
     """
     given a shell command
     adds a panel to the main window with the following:
-    display the command 
+    display the command
     buttons to run/kill the command
     X to remove the panel, but only if the command is not running
     multiline text areas for stdout, stderr
@@ -21,7 +23,7 @@ class CommandRunner(object):
     process = None
     detail = True
     keepalive = False
-    
+
     def __init__(self, frame, startdelay, cmd, args):
 
         self.cmd = cmd
@@ -33,7 +35,7 @@ class CommandRunner(object):
             self.deadtime = startdelay
         else:
             self.keepalive = False
-        
+
         # outer panel to hold the 3 parts:
         #  cmd+buttons, stdout, stderr
 
@@ -52,8 +54,9 @@ class CommandRunner(object):
         self.panel_cmd = panel_cmd
 
         self.txt_cmd = wx.TextCtrl(
-                panel_cmd, value=self.cmd, style=wx.TE_READONLY)
-        self.txt_cmd.SetForegroundColour(wx.BLUE)
+                panel_cmd, value=self.cmd.label, style=wx.TE_READONLY)
+        self.txt_cmd.SetForegroundColour(wx.WHITE)
+        self.txt_cmd.SetBackgroundColour(wx.BLUE)
         panel_cmd.Sizer.Add(self.txt_cmd, 1, wx.EXPAND)
 
         btn1 = wx.Button(panel_cmd, label='Run', size=(45, -1))
@@ -63,44 +66,44 @@ class CommandRunner(object):
         btn2 = wx.Button(panel_cmd, label='Kill', size=(45,-1))
         panel_cmd.Sizer.Add(btn2, 0, wx.EXPAND)
         btn2.Bind(wx.EVT_BUTTON, self.Kill)
-        
+
         btn3 = wx.Button(panel_cmd, label='Detail', size=(60,-1))
         panel_cmd.Sizer.Add(btn3, 0, wx.EXPAND)
         btn3.Bind(wx.EVT_BUTTON, self.Detail)
-        
+
         btn4 = wx.Button(panel_cmd, label='X', size=(25,-1))
         panel_cmd.Sizer.Add(btn4, 0, wx.EXPAND)
         btn4.Bind(wx.EVT_BUTTON, self.RemovePanel)
-        
+
         # sdtout
-        stdout = wx.TextCtrl( 
+        stdout = wx.TextCtrl(
                 panel_cr, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stdout_sizer = panel_cr.Sizer.Add(stdout, 1, wx.EXPAND)
         self.stdout = stdout
 
         # stderr
-        stderr = wx.TextCtrl( 
+        stderr = wx.TextCtrl(
                 panel_cr, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stderr_sizer = panel_cr.Sizer.Add(stderr, 1, wx.EXPAND)
         stderr.SetForegroundColour(wx.RED)
         self.stderr = stderr
 
-        # start a timer to check for stdout/err 
+        # start a timer to check for stdout/err
         panel_cr.Bind(wx.EVT_TIMER, self.OnTimer)
         self.timer = wx.Timer( panel_cr)
         self.timer.Start(100)
 
- 
+
     def Detail(self, event=None, show=None):
         # show/hide stdout/err
 
         if show is None:
-            # flip state 
+            # flip state
             self.detail = not self.detail
         else:
             if self.detail == show:
                 # nothing to do, don't animate, it looks weird.
-                return 
+                return
             else:
                 self.detail = show
 
@@ -112,7 +115,7 @@ class CommandRunner(object):
                 self.frame.Update()
                 wx.Yield()
 
-        if self.detail: 
+        if self.detail:
             # show detail on display
             # restore to normal size
             self.stdout.Show()
@@ -120,7 +123,7 @@ class CommandRunner(object):
             animate(range(1, 11))
             # self.cr_sizer.SetProportion(1)
 
-        else: 
+        else:
             # remove detail from display
             # squish
             animate(reversed(range(1, 11)))
@@ -131,7 +134,7 @@ class CommandRunner(object):
         self.frame.Layout()
         self.frame.Refresh()
 
-       
+
     def AppendLine(self, ctrl, line):
         ctrl.AppendText("\n"+line)
 
@@ -142,24 +145,24 @@ class CommandRunner(object):
     def RunCmd(self, event=None):
         if self.process is None:
             self.MarkOuts("Starting...")
-            self.txt_cmd.SetForegroundColour(wx.GREEN)
+            self.txt_cmd.SetBackgroundColour(DARKGREEN)
             self.process = wx.Process(self.panel_cr)
             self.process.Redirect()
             self.pid = wx.Execute(
-                    self.cmd, wx.EXEC_ASYNC, self.process)
+                    self.cmd.command, wx.EXEC_ASYNC, self.process)
             self.MarkOuts("Started.")
-            print 'Executed:  %s' % (self.cmd)
-            
+            print 'Executed:  %s' % (self.cmd.command)
+
     def Kill(self, event):
         if self.process is not None:
             self.MarkOuts("Killing...")
-            print 'Killing: %s' % (self.cmd)
+            print 'Killing: %s' % (self.cmd.command)
             wx.Process.Kill(self.pid)
             self.MarkOuts("Killed.")
             self.pid = None
-            self.txt_cmd.SetForegroundColour(wx.BLUE)
+            self.txt_cmd.SetBackgroundColour(wx.BLUE)
             self.keepalive = 0
-           
+
     def ShowIO(self):
         if self.process is not None:
 
@@ -171,7 +174,7 @@ class CommandRunner(object):
 
             one(self.process.GetInputStream(), self.stdout)
             one(self.process.GetErrorStream(), self.stderr)
- 
+
     def KeepAlive(self):
         if self.keepalive:
             if self.deadtime:
@@ -186,7 +189,7 @@ class CommandRunner(object):
 
     def ProcessEnded(self, event):
         if self.process is not None:
-            self.txt_cmd.SetForegroundColour(wx.RED)
+            self.txt_cmd.SetBackgroundColour(wx.RED)
             # make sure there is no more stdout/err
             self.ShowIO()
             self.MarkOuts("DIED!")
@@ -196,17 +199,27 @@ class CommandRunner(object):
         self.process = None
         self.pid = None
 
-        print 'DIED: %s' % (self.cmd)
+        print 'DIED: %s' % (self.cmd.command)
         self.deadtime = self.keepalive
 
-        
+
     def RemovePanel(self, event):
         if self.process is None:
-            parent=self.panel_cr.GetTopLevelParent() 
+            parent=self.panel_cr.GetTopLevelParent()
             self.timer.Stop()
             self.timer.Destroy()
-            self.panel_cr.Destroy() 
+            self.panel_cr.Destroy()
             parent.SendSizeEvent()
+
+class Command(object):
+    def __init__ (self, command, label = None):
+        # strip trailing spaces which get passed as a parameter.
+        self.command = command.strip ()
+
+        if label is None:
+            self.label = self.command
+        else:
+            self.label = label.strip ()
 
 def mk_commands(args):
 
@@ -221,22 +234,19 @@ def mk_commands(args):
     if args.commands:
         COMMANDS = [ ]
         for cmd_file in args.commands:
-            execfile(cmd_file, locals())
+            execfile(cmd_file, {'Command': Command}, locals())
     else:
         # for testing.
-        COMMANDS=[ 
-            'ping -i .3 127.0.0.1',
-            'ping -i 1 127.0.0.1',
-            'ping localhost',
-            'ssh localhost ping localhost',
-            'ping -c 5 -i .5 localhost',
-            'ping -h',
+        COMMANDS=[
+            Command('ping -i .3 127.0.0.1',         'Ping .3s'),
+            Command('ping -i 1 127.0.0.1',          'Ping 1s'),
+            Command('ping localhost',               'Ping localhost'),
+            Command('ssh localhost ping localhost', 'Ping localhost (SSH)'),
+            Command('ping -c 5 -i .5 localhost'),
+            Command('ping -h',                      'Ping help')
         ]
 
-    # strip trailing spaces which get passed as a parameter.
-    commands = [cmd.strip() for cmd in COMMANDS]
-
-    return commands
+    return COMMANDS
 
 def parse_args():
     parser = argparse.ArgumentParser(description='DVswitch manager.')
@@ -253,12 +263,12 @@ def parse_args():
     return args
 
 def main():
-    
+
     args = parse_args()
     commands=mk_commands(args)
-    
+
     app = wx.App(False)
-    
+
     size = wx.GetDisplaySize()
     frame = wx.Frame(
             None, title='dvs-mon',  pos=(1,1), size=(450, size[1]-100))
@@ -280,7 +290,7 @@ def main():
     frame.Show()
 
     # wx.lib.inspection.InspectionTool().Show()
-    
+
     app.MainLoop()
 
 if __name__ == '__main__':
