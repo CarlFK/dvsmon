@@ -1,13 +1,24 @@
 #!/usr/bin/python
+#
+# -*- coding: utf-8 -*-
+# vim: set ts=4 sw=4 et sts=4 ai:
 
 import argparse
 import time
+
+import os
+import fcntl
+import subprocess
 
 import wx
 # import wx.lib.sized_controls as sc
 # import wx.lib.inspection
 
 DARKGREEN = wx.Colour(0,196,0)
+
+def set_nonblock(fd):
+    f1 = fcntl.fcntl(fd.fileno(), fcntl.F_GETFL)
+    fcntl.fcntl(fd.fileno(), fcntl.F_SETFL, f1|os.O_NONBLOCK)
 
 class CommandRunner(object):
 
@@ -43,8 +54,6 @@ class CommandRunner(object):
         panel_cr.Sizer = wx.BoxSizer(wx.VERTICAL)
         self.cr_sizer = frame.Sizer.Add(panel_cr, 10, wx.EXPAND)
         self.panel_cr = panel_cr
-
-        panel_cr.Bind(wx.EVT_END_PROCESS, self.ProcessEnded)
 
         # cmd+buttons
         panel_cmd = wx.Panel(panel_cr)
@@ -135,21 +144,26 @@ class CommandRunner(object):
         self.frame.Refresh()
 
 
-    def AppendLine(self, ctrl, line):
-        ctrl.AppendText("\n"+line)
+    def Append(self, ctrl, line):
+        ctrl.AppendText(line)
 
     def MarkOuts(self, line):
-        self.AppendLine(self.stdout,line)
-        self.AppendLine(self.stderr,line)
+        self.Append(self.stdout,line+"\n")
+        self.Append(self.stderr,line+"\n")
+
 
     def RunCmd(self, event=None):
         if self.process is None:
             self.MarkOuts("Starting...")
             self.txt_cmd.SetBackgroundColour(DARKGREEN)
-            self.process = wx.Process(self.panel_cr)
-            self.process.Redirect()
-            self.pid = wx.Execute(
-                    self.cmd.command, wx.EXEC_ASYNC, self.process)
+            self.process = subprocess.Popen(
+                self.cmd.command,
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE,
+                shell = True,
+                )
+            set_nonblock(self.process.stdout)
+            set_nonblock(self.process.stderr)
             self.MarkOuts("Started.")
             print 'Executed:  %s' % (self.cmd.command)
 
@@ -157,23 +171,25 @@ class CommandRunner(object):
         if self.process is not None:
             self.MarkOuts("Killing...")
             print 'Killing: %s' % (self.cmd.command)
-            wx.Process.Kill(self.pid)
+            self.process.kill()
             self.MarkOuts("Killed.")
-            self.pid = None
             self.txt_cmd.SetBackgroundColour(wx.BLUE)
             self.keepalive = 0
 
-    def ShowIO(self):
+    def ReadIO(self):
+        try:
+            self.Append(self.stdout, self.process.stdout.read())
+            self.Append(self.stderr, self.process.stderr.read())
+        except IOError, e:
+            pass
+
+    def PollProcess(self):
         if self.process is not None:
+            self.ReadIO()
 
-            def one(stream,ctrl):
-              while stream.CanRead():
-                line = stream.read()
-                line = line.strip()
-                self.AppendLine(ctrl,line)
-
-            one(self.process.GetInputStream(), self.stdout)
-            one(self.process.GetErrorStream(), self.stderr)
+            retcode = self.process.poll()
+            if retcode is not None:
+                self.ProcessEnded(retcode)
 
     def KeepAlive(self):
         if self.keepalive:
@@ -184,20 +200,19 @@ class CommandRunner(object):
                 self.RunCmd()
 
     def OnTimer(self,event):
-        self.ShowIO()
+        self.PollProcess()
         self.KeepAlive()
 
-    def ProcessEnded(self, event):
+    def ProcessEnded(self, retcode):
         if self.process is not None:
             self.txt_cmd.SetBackgroundColour(wx.RED)
             # make sure there is no more stdout/err
-            self.ShowIO()
+            self.ReadIO()
             self.MarkOuts("DIED!")
             # expand the UI
             self.Detail(show=True)
 
         self.process = None
-        self.pid = None
 
         print 'DIED: %s' % (self.cmd.command)
         self.deadtime = self.keepalive
