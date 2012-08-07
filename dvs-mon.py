@@ -100,7 +100,7 @@ class CommandRunner(object):
         # start a timer to check for stdout/err
         panel_cr.Bind(wx.EVT_TIMER, self.OnTimer)
         self.timer = wx.Timer( panel_cr)
-        self.timer.Start(100)
+        self.timer.Start(10)
 
 
     def Detail(self, event=None, show=None):
