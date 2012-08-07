@@ -26,7 +26,7 @@ last_card = cards[-2]
 hw = last_card.split()[0]
 
 # super hack - ThinkPad has some sound device we need to ignore
-if hw='29':
+if hw=='29':
     last_card = cards[-4]
     hw = last_card.split()[0]
 
