@@ -8,7 +8,9 @@ import time
 
 import os
 import fcntl
+import select
 import subprocess
+import threading
 
 import wx
 # import wx.lib.sized_controls as sc
@@ -16,9 +18,84 @@ import wx
 
 DARKGREEN = wx.Colour(0,196,0)
 
-def set_nonblock(fd):
-    f1 = fcntl.fcntl(fd.fileno(), fcntl.F_GETFL)
-    fcntl.fcntl(fd.fileno(), fcntl.F_SETFL, f1|os.O_NONBLOCK)
+
+class PollingThread(threading.Thread):
+    """Watches the stdout and stderr of a command and appends the output to a wxWidget.
+
+    FIXME: Currently only supports one command per thread but this is wasteful
+    as epoll supports a bazillion sockets. Only reason multiple threads is for
+    the process tracking.
+    """
+
+    MASK = select.EPOLLIN | select.EPOLLPRI | select.EPOLLERR | select.EPOLLHUP
+
+    def __init__(self, command, stdout, stderr, callback):
+        threading.Thread.__init__(self)
+        # We terminate when the program terminates
+        self.setDaemon(True)
+
+        # Create the output process
+        self.process = subprocess.Popen(
+            command,
+            stdout = subprocess.PIPE,
+            stderr = subprocess.PIPE,
+            shell = True,
+            )
+
+        self.epoll = select.epoll()
+        self.fd_to_output = {}
+
+        self.callback = callback
+
+        self.register(self.process.stdout, stdout)
+        self.register(self.process.stderr, stderr)
+
+    def register(self, pipe, output):
+        # Set the file descriptor to be non-blocking as we don't know how much
+        # is ready to read but don't want to read a single byte at the time.
+        f1 = fcntl.fcntl(pipe.fileno(), fcntl.F_GETFL)
+        fcntl.fcntl(pipe.fileno(), fcntl.F_SETFL, f1|os.O_NONBLOCK)
+
+        # Create a mapping so we can get back to the file object
+        self.fd_to_output[pipe.fileno()] = (pipe, output)
+
+        # Register the file descriptor on the epoll object.
+        self.epoll.register(pipe.fileno(), self.MASK)
+
+    def run(self):
+        # While the process is running
+        while self.process.returncode is None:
+            self.poll()
+
+        # One last poll to get the remaining stuff
+        self.poll()
+
+        # Tell people the process died
+        wx.CallAfter(self.callback, self.process.returncode)
+
+    def kill(self):
+        self.process.kill()
+
+    def poll(self):
+        self.process.poll()
+
+        events = self.epoll.poll(0.1)
+        for fd, event in events:
+            if event == select.EPOLLHUP:
+                self.epoll.unregister(fd)
+
+            pipe, output = self.fd_to_output[fd]
+            try:
+                data = pipe.read()
+            except IOError, e:
+                wx.CallAfter(output.Append, "***Internal Error***: %s" % e)
+
+            wx.CallAfter(output.Append, data)
+            # Everytime we callout, we sleep for a little bit to stop wxWidgets
+            # getting locked up dealing with CallAfter events (as we can post
+            # them quicker then wxWidgets deals with them).
+            time.sleep(0.1)
+
 
 class CommandRunner(object):
 
@@ -31,7 +108,7 @@ class CommandRunner(object):
     multiline text areas for stdout, stderr
     """
 
-    process = None
+    poller = None
     detail = True
     keepalive = False
 
@@ -84,28 +161,31 @@ class CommandRunner(object):
         panel_cmd.Sizer.Add(btn4, 0, wx.EXPAND)
         btn4.Bind(wx.EVT_BUTTON, self.RemovePanel)
 
+        class TextCtrlWithAppend(wx.TextCtrl):
+            def Append(self, line):
+                if self.GetLastPosition() > 1e3:
+                    self.Remove(0, len(line))
+                self.AppendText(line)
+
+        self.frame.Bind(wx.EVT_CLOSE, self.Kill)
+
         # sdtout
-        stdout = wx.TextCtrl(
+        stdout = TextCtrlWithAppend(
                 panel_cr, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stdout_sizer = panel_cr.Sizer.Add(stdout, 1, wx.EXPAND)
         self.stdout = stdout
 
         # stderr
-        stderr = wx.TextCtrl(
+        stderr = TextCtrlWithAppend(
                 panel_cr, style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.stderr_sizer = panel_cr.Sizer.Add(stderr, 1, wx.EXPAND)
         stderr.SetForegroundColour(wx.RED)
         self.stderr = stderr
 
-        # start a timer to check for stdout/err
-        panel_cr.Bind(wx.EVT_TIMER, self.OnTimer)
-        self.timer = wx.Timer( panel_cr)
-        self.timer.Start(10)
-
+        self.poller = None
 
     def Detail(self, event=None, show=None):
         # show/hide stdout/err
-
         if show is None:
             # flip state
             self.detail = not self.detail
@@ -115,7 +195,6 @@ class CommandRunner(object):
                 return
             else:
                 self.detail = show
-
 
         def animate(sequence):
             for i in sequence:
@@ -143,53 +222,31 @@ class CommandRunner(object):
         self.frame.Layout()
         self.frame.Refresh()
 
-
-    def Append(self, ctrl, line):
-        ctrl.AppendText(line)
-
     def MarkOuts(self, line):
-        self.Append(self.stdout,line+"\n")
-        self.Append(self.stderr,line+"\n")
-
+        self.stdout.Append(line+"\n")
+        self.stderr.Append(line+"\n")
 
     def RunCmd(self, event=None):
-        if self.process is None:
+        if self.poller is None:
             self.MarkOuts("Starting...")
             self.txt_cmd.SetBackgroundColour(DARKGREEN)
-            self.process = subprocess.Popen(
-                self.cmd.command,
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE,
-                shell = True,
-                )
-            set_nonblock(self.process.stdout)
-            set_nonblock(self.process.stderr)
+
+            self.poller = PollingThread(
+                self.cmd.command, self.stdout, self.stderr, self.ProcessEnded)
+
             self.MarkOuts("Started.")
             print 'Executed:  %s' % (self.cmd.command)
+            self.poller.start()
 
     def Kill(self, event):
-        if self.process is not None:
+        if self.poller is not None:
             self.MarkOuts("Killing...")
             print 'Killing: %s' % (self.cmd.command)
-            self.process.kill()
+            self.poller.kill()
             self.MarkOuts("Killed.")
             self.txt_cmd.SetBackgroundColour(wx.BLUE)
             self.keepalive = 0
-
-    def ReadIO(self):
-        try:
-            self.Append(self.stdout, self.process.stdout.read())
-            self.Append(self.stderr, self.process.stderr.read())
-        except IOError, e:
-            pass
-
-    def PollProcess(self):
-        if self.process is not None:
-            self.ReadIO()
-
-            retcode = self.process.poll()
-            if retcode is not None:
-                self.ProcessEnded(retcode)
+        event.Skip()
 
     def KeepAlive(self):
         if self.keepalive:
@@ -200,31 +257,27 @@ class CommandRunner(object):
                 self.RunCmd()
 
     def OnTimer(self,event):
-        self.PollProcess()
         self.KeepAlive()
 
     def ProcessEnded(self, retcode):
-        if self.process is not None:
+        if self.poller is not None:
             self.txt_cmd.SetBackgroundColour(wx.RED)
-            # make sure there is no more stdout/err
-            self.ReadIO()
-            self.MarkOuts("DIED!")
+            self.MarkOuts("DIED! with %s" % retcode)
             # expand the UI
             self.Detail(show=True)
 
-        self.process = None
-
-        print 'DIED: %s' % (self.cmd.command)
+        self.poller = None
+        print 'DIED: %s with %s' % (self.cmd.command, retcode)
         self.deadtime = self.keepalive
 
-
     def RemovePanel(self, event):
-        if self.process is None:
+        if self.poller is None:
             parent=self.panel_cr.GetTopLevelParent()
             self.timer.Stop()
             self.timer.Destroy()
             self.panel_cr.Destroy()
             parent.SendSizeEvent()
+
 
 class Command(object):
     def __init__ (self, command, label = None):
@@ -277,7 +330,10 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
+app = None
 def main():
+    global app
 
     args = parse_args()
     commands=mk_commands(args)
