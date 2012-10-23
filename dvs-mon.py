@@ -4,20 +4,30 @@
 # vim: set ts=4 sw=4 et sts=4 ai:
 
 import argparse
-import time
-
+import atexit
 import os
 import fcntl
 import select
+import signal
 import subprocess
+import sys
 import threading
+import time
 
 import wx
 # import wx.lib.sized_controls as sc
 # import wx.lib.inspection
 
-DARKGREEN = wx.Colour(0,196,0)
+# Make sure everything dies when I die....
+KILLME = []
+def cleanup():
+    for p in KILLME:
+        p.cleanup()
+    return True
+atexit.register(cleanup)
 
+
+DARKGREEN = wx.Colour(0,196,0)
 
 class PollingThread(threading.Thread):
     """Watches the stdout and stderr of a command and appends the output to a wxWidget.
@@ -34,13 +44,32 @@ class PollingThread(threading.Thread):
         # We terminate when the program terminates
         self.setDaemon(True)
 
+        KILLME.append(self)
+
+        self._status = []
+        self.status("STARTING")
+
+        # Move the subprocess into it's own process group
+        def new_process_group():
+            import os
+            os.setpgrp()
+
         # Create the output process
         self.process = subprocess.Popen(
             command,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
             shell = True,
+            preexec_fn = new_process_group,
             )
+
+        # Wait for the process to move into it's own process group, then capture
+        # the process group.
+        while True:
+            self.process_group = os.getpgid(self.process.pid)
+            if self.process_group == os.getpgid(0):
+                continue
+            break
 
         self.epoll = select.epoll()
         self.fd_to_output = {}
@@ -49,6 +78,34 @@ class PollingThread(threading.Thread):
 
         self.register(self.process.stdout, stdout)
         self.register(self.process.stderr, stderr)
+
+        self.status("RUNNING")
+
+    def cleanup(self):
+        print "Cleanup", self
+        try:
+            self.kill()
+        except Exception, e:
+            print e
+
+        try:
+            self.poll()
+        except Exception, e:
+            print e
+
+        time.sleep(0.1)
+        try:
+            self.killhard()
+        except Exception, e:
+            print e
+
+        try:
+            self.poll()
+        except Exception, e:
+            print e
+
+    def status(self, status):
+        self._status.append((status, time.time()))
 
     def register(self, pipe, output):
         # Set the file descriptor to be non-blocking as we don't know how much
@@ -65,16 +122,44 @@ class PollingThread(threading.Thread):
     def run(self):
         # While the process is running
         while self.process.returncode is None:
+            print self._status, time.time() - self._status[-1][-1]
+            # Kill roughly if it's taking to long to kill...
+            if self._status[-1][0] == "KILLING" and (
+                    time.time() - self._status[-1][-1]) > 5.0:
+                self.killhard()
+
             self.poll()
 
+        KILLME.remove(self)
+
         # One last poll to get the remaining stuff
+        self.status("DIEING")
         self.poll()
+        self.status("DEAD")
 
         # Tell people the process died
         wx.CallAfter(self.callback, self.process.returncode)
 
     def kill(self):
-        self.process.kill()
+        self.status("KILLING")
+        # Kill the program nicely first
+        os.killpg(self.process_group, signal.SIGTERM)
+
+    def killhard(self):
+        try:
+            # Stop all the processes first (so they don't keep spawning new
+            # processes in this group).
+            os.killpg(self.process_group, signal.SIGSTOP)
+        except OSError, e:
+            print self._status
+            print e
+
+        try:
+            # Kill all the processes in the process group we created.
+            os.killpg(self.process_group, signal.SIGKILL)
+        except OSError, e:
+            print self._status
+            print e
 
     def poll(self):
         self.process.poll()
@@ -238,14 +323,20 @@ class CommandRunner(object):
             print 'Executed:  %s' % (self.cmd.command)
             self.poller.start()
 
+    def _KillMore(self, event, poller):
+
+        self.MarkOuts("Sending KILL...")
+        self.poller.kill()
+        self.MarkOuts("Sent.")
+
     def Kill(self, event):
+        self.keepalive = 0
+
         if self.poller is not None:
-            self.MarkOuts("Killing...")
+            self.MarkOuts("Sending TERM...")
             print 'Killing: %s' % (self.cmd.command)
             self.poller.kill()
-            self.MarkOuts("Killed.")
-            self.txt_cmd.SetBackgroundColour(wx.BLUE)
-            self.keepalive = 0
+
         event.Skip()
 
     def KeepAlive(self):
@@ -289,6 +380,7 @@ class Command(object):
         else:
             self.label = label.strip ()
 
+
 def mk_commands(args):
 
     host = "--host %s" % args.host if args.host else ''
@@ -311,7 +403,8 @@ def mk_commands(args):
             Command('ping localhost',               'Ping localhost'),
             Command('ssh localhost ping localhost', 'Ping localhost (SSH)'),
             Command('ping -c 5 -i .5 localhost'),
-            Command('ping -h',                      'Ping help')
+            Command('ping -h',                      'Ping help'),
+            Command('python dontdie.py',            'I don\'t die!'),
         ]
 
     return COMMANDS
@@ -330,7 +423,6 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-
 app = None
 def main():
     global app
@@ -338,7 +430,32 @@ def main():
     args = parse_args()
     commands=mk_commands(args)
 
-    app = wx.App(False)
+    # Clear the default signal handlers so control ends up back in Python and we
+    # can cleanup running processes.
+    app = wx.App(clearSigInt=True)
+
+    # WARNING: This code needs to occur right after the app is created and
+    # before the main loop starts.
+    #-------------------------------------------------------------------------
+    # Set up signal handlers which terminate the application when they occur.
+    import signal
+    # Create human names for the signals
+    signal.names = dict(
+            (k, v) for v, k in signal.__dict__.iteritems() if v.startswith('SIG'))
+    def signal_cleanup(sig, frame):
+        print "Caught %s, exiting" % signal.names[sig]
+        wx.CallAfter(app.Exit)
+    signal.signal(signal.SIGTERM, signal_cleanup)
+    signal.signal(signal.SIGINT, signal_cleanup)
+
+    # Signals are only delivered when wxPython hands back to the Python
+    # interpretor, this stupid hack forces that to happen once every 100
+    # milliseconds.
+    def ticker(*args):
+        pass
+    app.ticker = wx.PyTimer(ticker)
+    app.ticker.Start(100)
+    #-------------------------------------------------------------------------
 
     size = wx.GetDisplaySize()
     frame = wx.Frame(
@@ -359,10 +476,11 @@ def main():
     cr.Detail(cr,show=True)
 
     frame.Show()
-
     # wx.lib.inspection.InspectionTool().Show()
-
+    print "b"
     app.MainLoop()
+    print "c"
+
 
 if __name__ == '__main__':
     main()
