@@ -122,7 +122,7 @@ class PollingThread(threading.Thread):
     def run(self):
         # While the process is running
         while self.process.returncode is None:
-            print self._status, time.time() - self._status[-1][-1]
+            # print self._status, time.time() - self._status[-1][-1]
             # Kill roughly if it's taking to long to kill...
             if self._status[-1][0] == "KILLING" and (
                     time.time() - self._status[-1][-1]) > 5.0:
@@ -477,9 +477,7 @@ def main():
 
     frame.Show()
     # wx.lib.inspection.InspectionTool().Show()
-    print "b"
     app.MainLoop()
-    print "c"
 
 
 if __name__ == '__main__':
