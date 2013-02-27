@@ -411,14 +411,25 @@ def mk_commands(args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='DVswitch manager.')
+
+    # host and port to pass to all dvswitch commands
+    # if not used, they will use ~/.dvswitchrc as usual
     parser.add_argument('--host' )
     parser.add_argument('-p', '--port' )
-    parser.add_argument('-k', '--keepalive', type=int )
+
+    # keepalive went away when thread added
+    # likely oversight, not deliberate.
+    parser.add_argument('-k', '--keepalive', type=int,
+            help = "do not use - no longer implemented." )
+
     parser.add_argument('-c', '--commands', nargs="*",
+
       help="command file" )
     parser.add_argument('-s', '--show-all-detail', action="store_true" ,
             default=False)
-    parser.add_argument('-v', '--verbose', action="store_true" )
+
+    # currently there is no verbouse output, so don't bother
+    # parser.add_argument('-v', '--verbose', action="store_true" )
 
     args = parser.parse_args()
     return args

@@ -10,6 +10,11 @@ for d in dirs:
         for i in '12':
             test_dv = 'test-%s.dv' % (i)
             fullpath=os.path.join(d,test_dv )
-            COMMANDS.append( Command('dvsource-file -l %s %s'%(fullpath,hostport) ))
+
+            cmd = 'dvsource-file -l %s %s'%(fullpath,hostport)
+            description = test_dv
+            COMMANDS.append( Command( cmd, description ))
+
+        # once files have been found in one of the dirs, stop looking.
         exit
 
