@@ -3,20 +3,24 @@
 # find a place to save files
 # look for ~/Videos, then /media/disk, then /media/*
 
+# also check for ~/veyepar.cfg
+#  if found: use client/show slugs to construct dir name
+#  else: use $hostname
+
 import os
 import socket
+import ConfigParser
 
 # make a list of dirs to search -
 # use any that have a dv or veyepar dir
 # else find the 'best' one.
 # home dir
-dirs  = [os.path.expanduser('~/Videos/veyepar')]
-# anyting mounted under /media with a Videos/veyepar dir
-dirs += ["/media/%s/Videos/veyepar"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
-# can't find a veyepar dir. now start looking for anything reasonable.
+dirs  = [os.path.expanduser('~/Videos')]
+# if can't find a Video dir, start looking for anything reasonable.
 # someday maybe search for something with the most free space.
+# ubuntu now mounts drives under /media/$USER/disk-lable
+# need to support the $USER thing someday?
 dirs += ["/media/%s/Videos"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
-dirs += [os.path.expanduser('~/Videos')]
 # rom excludes cdrom cdrom-1 or any other rom.
 dirs += ["/media/%s"%dir
     for dir in os.listdir('/media') \
@@ -49,13 +53,30 @@ for vid_dir in dirs:
             else:
                 print "%s minutes is not enough." % (minutes)
 
-hostname=socket.gethostname()
+# vid_dir is the trunk
+# if veyepar is around, use it
+# if veyepar room isn't set, use hostname
+hostname=socket.gethostname() 
+
+config = ConfigParser.RawConfigParser()
+files=config.read([os.path.expanduser('~/veyepar/dj/scripts/veyepar.cfg'),
+        os.path.expanduser('~/veyepar.cfg')])
+if files:
+    d=dict(config.items('global'))
+    client = d['client']
+    show = d['show']
+    loc = d.get('room',hostname)
+    dv_dir = os.path.join( vid_dir, 'veyepar', client, show, 'dv', loc )
+else:
+    dv_dir = os.path.join( vid_dir, 'dv', hostname )
 
 # add output dirs
 for vid_dir in vid_dirs:
     COMMANDS.append(
         Command('dvsink-files %s %s' % (
-                os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' ),
+                os.path.join( dv_dir, '%Y-%m-%d','%H_%M_%S.dv' ),
                 hostport,
                 )))
+
+# os.path.join( vid_dir, 'dv', hostname,'%Y-%m-%d','%H_%M_%S.dv' ),
 
