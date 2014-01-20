@@ -189,7 +189,7 @@ class CommandRunner(object):
     adds a panel to the main window with the following:
     display the command
     buttons to run/kill the command
-    X to remove the panel, but only if the command is not running
+    X to remove panel, but only if the command is not running (depricated)
     multiline text areas for stdout, stderr
     """
 
@@ -242,9 +242,11 @@ class CommandRunner(object):
         panel_cmd.Sizer.Add(btn3, 0, wx.EXPAND)
         btn3.Bind(wx.EVT_BUTTON, self.Detail)
 
+        """
         btn4 = wx.Button(panel_cmd, label='X', size=(25,-1))
         panel_cmd.Sizer.Add(btn4, 0, wx.EXPAND)
         btn4.Bind(wx.EVT_BUTTON, self.RemovePanel)
+        """
 
         class TextCtrlWithAppend(wx.TextCtrl):
             def Append(self, line):
@@ -361,6 +363,7 @@ class CommandRunner(object):
         print 'DIED: %s with %s' % (self.cmd.command, retcode)
         self.deadtime = self.keepalive
 
+    """
     def RemovePanel(self, event):
         if self.poller is None:
             parent=self.panel_cr.GetTopLevelParent()
@@ -368,7 +371,7 @@ class CommandRunner(object):
             self.timer.Destroy()
             self.panel_cr.Destroy()
             parent.SendSizeEvent()
-
+    """
 
 class Command(object):
     def __init__ (self, command, label = None):
