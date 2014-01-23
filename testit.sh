@@ -11,8 +11,8 @@
 python ./dvs-mon.py \
   -c \
     dvswitch.py \
-    source_alsa.py \
     source_test.py \
-    sink_ffplay.py \
+    source_alsa.py \
     sink_find_dir.py \
+    sink_ffplay.py \
     $*

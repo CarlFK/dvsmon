@@ -2,6 +2,15 @@
 
 import os
 
+
+# https://github.com/timvideos/dvsource-v4l2-other
+cmd = "dvsource-v4l2-other -s ntsc --fake ball"
+description = "gstreamer ball and buzz"
+COMMANDS.append( Command( cmd, description ))
+cmd = "dvsource-v4l2-other -s ntsc --fake snow"
+description = "gstreamer snow and buzz"
+COMMANDS.append( Command( cmd, description ))
+            
 # find dir of test files
     # check in propper installed dir, or in the local dir for dev
 dirs=['/usr/share/dvsmon/dv/','app_data/dv/']
