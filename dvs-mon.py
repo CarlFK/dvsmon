@@ -197,17 +197,10 @@ class CommandRunner(object):
     detail = True
     keepalive = False
 
-    def __init__(self, frame, startdelay, cmd, args):
+    def __init__(self, frame, cmd, args):
 
         self.cmd = cmd
         self.frame = frame
-
-        if args.keepalive:
-            self.keepalive = args.keepalive
-            # extra delay to spread out startup
-            self.deadtime = startdelay
-        else:
-            self.keepalive = False
 
         # outer panel to hold the 3 parts:
         #  cmd+buttons, stdout, stderr
@@ -270,6 +263,10 @@ class CommandRunner(object):
         self.stderr = stderr
 
         self.poller = None
+
+        if args.keepalive:
+            self.keepalive = args.keepalive
+
 
     def Detail(self, event=None, show=None):
         # show/hide stdout/err
@@ -363,16 +360,6 @@ class CommandRunner(object):
         print 'DIED: %s with %s' % (self.cmd.command, retcode)
         self.deadtime = self.keepalive
 
-    """
-    def RemovePanel(self, event):
-        if self.poller is None:
-            parent=self.panel_cr.GetTopLevelParent()
-            self.timer.Stop()
-            self.timer.Destroy()
-            self.panel_cr.Destroy()
-            parent.SendSizeEvent()
-    """
-
 class Command(object):
     def __init__ (self, command, label = None):
         # strip trailing spaces which get passed as a parameter.
@@ -425,14 +412,11 @@ def parse_args():
     parser.add_argument('-k', '--keepalive', type=int,
             help = "do not use - no longer implemented." )
 
-    parser.add_argument('-c', '--commands', nargs="*",
-
+    parser.add_argument('-c', '--commands', nargs="*", 
       help="command file" )
+
     parser.add_argument('-s', '--show-all-detail', action="store_true" ,
             default=False)
-
-    # currently there is no verbouse output, so don't bother
-    # parser.add_argument('-v', '--verbose', action="store_true" )
 
     args = parser.parse_args()
     return args
@@ -452,7 +436,6 @@ def main():
     # before the main loop starts.
     #-------------------------------------------------------------------------
     # Set up signal handlers which terminate the application when they occur.
-    import signal
     # Create human names for the signals
     signal.names = dict(
             (k, v) for v, k in signal.__dict__.iteritems() if v.startswith('SIG'))
@@ -476,23 +459,26 @@ def main():
             None, title='dvs-mon',  pos=(1,1), size=(450, size[1]-100))
     frame.Sizer = wx.BoxSizer(wx.VERTICAL)
 
-    startdelay=args.keepalive
     for cmd in commands:
-        cr = CommandRunner( frame, startdelay, cmd, args )
+        cr = CommandRunner( frame, cmd, args )
         if args.show_all_detail:
             cr.Detail(cr,show=True)
         else:
             cr.Detail(cr,show=False)
         if args.keepalive is not None:
-            startdelay+=args.keepalive/2
+            cr.RunCmd()
+            time.sleep(args.keepalive)
 
     # show stdout/err of last command:
     cr.Detail(cr,show=True)
 
     frame.Show()
     # wx.lib.inspection.InspectionTool().Show()
+
+
     app.MainLoop()
 
 
 if __name__ == '__main__':
     main()
+
