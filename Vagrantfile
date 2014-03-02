@@ -7,6 +7,7 @@ apt-get --assume-yes update
 
 # use local cache if it exists:
 apt-get --assume-yes install squid-deb-proxy-client
+apt-get --assume-yes upgrade
 
 # install things to keep me from going crazy
 apt-get --assume-yes install git dpkg-dev vim python-software-properties
@@ -14,6 +15,7 @@ apt-get --assume-yes install git dpkg-dev vim python-software-properties
 # apt-add-repository --yes ppa:carlfk
 # apt-add-repository --yes "deb http://ftp.us.debian.org/debian wheezy-backports main"
 # apt-get --assume-yes update
+# apt-get --assume-yes upgrade
 
 # install dev tools
 apt-get --assume-yes install git dpkg-dev
@@ -35,6 +37,10 @@ apt-get --assume-yes install \
   gstreamer0.10-ffmpeg \
   libgstreamer0.10-0
 
+apt-get --assume-yes install ubuntu-desktop
+
+# auto log in the vagrant user
+printf "autologin-user=vagrant\n" >> /etc/lightdm/lightdm.conf
 
 # things to do as the user (vagrant)
 cat <<B2 >bootstrap2.sh
@@ -43,6 +49,7 @@ cat <<B2 >bootstrap2.sh
 cd 
 mkdir bin
 PATH=~/bin:$PATH
+mkdir 
 
 # setup .dvswitchrc
 cat <<dvsrc > .dvswitchrc
@@ -74,23 +81,41 @@ cd
 
 git clone git://github.com/CarlFK/dvsmon.git
 
-cd dvsmon
-# run dvswitch with 4 test streams
-# (only the first gets streamed)
-./stream_test.sh
+# .config doesn't exist yet (guessing it gets created after the first login)
+mkdir -p .config/autostart
+cat <<AUTORUN > .config/autostart/dvsmon.desktop
+[Desktop Entry]
+Type=Application
+Exec=/bin/bash -c "cd /home/vagrant/dvsmon && ./stream_test.sh -k 4"
+Name=DVswitch-monitor
+AUTORUN
 
 # eof: bootstrap2.sh
 B2
 chown vagrant ./bootstrap2.sh
 chmod u+x ./bootstrap2.sh
 su vagrant ./bootstrap2.sh
+
+# boot into X, ./stream_test.sh will then run 
+service lightdm start
+# reboot
+
 SCRIPT
 
 VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
   config.vm.box = "precise64"
   config.vm.box_url = "http://files.vagrantup.com/precise64.box"
   config.vm.provision "shell", inline: $script
   config.vm.network "forwarded_port", guest: 2000, host: 2000,
       auto_correct: true
+
+  config.vm.provider :virtualbox do |vb|
+     vb.gui = true
+     vb.customize ["modifyvm", :id, "--memory", "1024"]
+     vb.customize ["modifyvm", :id, "--cpuexecutioncap", "70"]
+  end
+
 end
+
