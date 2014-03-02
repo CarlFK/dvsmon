@@ -37,7 +37,8 @@ apt-get --assume-yes install \
   gstreamer0.10-ffmpeg \
   libgstreamer0.10-0
 
-apt-get --assume-yes install ubuntu-desktop
+# apt-get --assume-yes install ubuntu-desktop
+apt-get --assume-yes install xorg lightdm xubuntu-default-settings xfce4-session
 
 # auto log in the vagrant user
 printf "autologin-user=vagrant\n" >> /etc/lightdm/lightdm.conf
@@ -114,7 +115,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :virtualbox do |vb|
      vb.gui = true
      vb.customize ["modifyvm", :id, "--memory", "1024"]
-     vb.customize ["modifyvm", :id, "--cpuexecutioncap", "70"]
+     vb.customize ["modifyvm", :id, "--cpuexecutioncap", "90"]
   end
 
 end
