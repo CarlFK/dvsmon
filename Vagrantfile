@@ -27,38 +27,46 @@ apt-get --assume-yes install dvswitch dvsource dvsink python-wxgtk2.8
 # apt-get --assume-yes install cmake libasound2-dev libavcodec-dev libboost-dev libboost-thread-dev libboost-system-dev libgtkmm-2.4-dev libjack-jackd2-dev liblo-dev libraw1394-dev libxv-dev
 
 # deps for gst-plugins-dvswitch
-apt-get --assume-yes install dh-autoreconf libgstreamer-plugins-base0.10-dev gstreamer0.10-ffmpeg
+# apt-get --assume-yes install dh-autoreconf libgstreamer-plugins-base0.10-dev gstreamer0.10-ffmpeg
+apt-get --assume-yes install dh-autoreconf libgstreamer-plugins-base1.0-dev gstreamer1.0-libav
 
 # deps for dvsource-v4l2-other
 apt-get --assume-yes install \
   gstreamer0.10-tools \
-  gstreamer0.10-plugins-good \
   gstreamer0.10-plugins-base \
+  gstreamer0.10-plugins-good \
   gstreamer0.10-ffmpeg \
   libgstreamer0.10-0
 
+apt-get --assume-yes install \
+  gstreamer1.0-tools \
+  gstreamer1.0-plugins-base \
+  gstreamer1.0-plugins-good \
+  gstreamer1.0-avlib \
+  libgstreamer1.0-0
+
+
+# install things to support autorunning a gui app
 # apt-get --assume-yes install ubuntu-desktop
+# install less than the whole u-desktop (and apps):
 apt-get --assume-yes install xorg lightdm xubuntu-default-settings xfce4-session
 
 # auto log in the vagrant user
-printf "autologin-user=vagrant\n" >> /etc/lightdm/lightdm.conf
+printf "autologin-user=${account}\n" >> /etc/lightdm/lightdm.conf
 
 # things to do as the user (vagrant)
 cat <<B2 >bootstrap2.sh
 #!/bin/bash -x
 
-cd 
 mkdir bin
-PATH=~/bin:$PATH
-mkdir 
 
-# setup .dvswitchrc
+# setup .dvswitchrc 
 cat <<dvsrc > .dvswitchrc
 MIXER_HOST=0.0.0.0
 MIXER_PORT=2000
 dvsrc
 
-# setup dvswitch
+# build dvswitch
 # git clone git://git.debian.org/git/dvswitch/dvswitch.git
 # cd dvswitch
 # dpkg-buildpackage -b
@@ -99,7 +107,6 @@ su vagrant ./bootstrap2.sh
 
 # boot into X, ./stream_test.sh will then run 
 service lightdm start
-# reboot
 
 SCRIPT
 
@@ -114,7 +121,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provider :virtualbox do |vb|
      vb.gui = true
-     vb.customize ["modifyvm", :id, "--memory", "1024"]
+     vb.customize ["modifyvm", :id, "--memory", "512"]
+     vb.customize ["modifyvm", :id, "--cpus", "1"]
      vb.customize ["modifyvm", :id, "--cpuexecutioncap", "90"]
   end
 
