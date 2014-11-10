@@ -4,5 +4,5 @@
  title="dvsmon"\
  command="/usr/bin/dvsmon"\
  icon="/usr/share/pixmaps/dvswitch-logo.svg"\
- longtitle="DVswitch Monitor: manager DVswitch components" \
+ longtitle="DVswitch Monitor: manage DVswitch components" \
  description="GUI to launch and monitor the DVswitch components."
