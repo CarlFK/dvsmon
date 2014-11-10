@@ -20,15 +20,37 @@ dirs  = [os.path.expanduser('~/Videos')]
 # someday maybe search for something with the most free space.
 # ubuntu now mounts drives under /media/$USER/disk-lable
 # need to support the $USER thing someday?
-dirs += ["/media/%s/Videos"%dir for dir in os.listdir('/media') if dir[0]!='.' ]
+
+def find_Vdirs(root):
+    """ find dir/Videos dirs in root (does not walk the tree) """
+    for d in os.listdir(root):
+        d2 = os.path.join(root,d,'Videos')
+        if os.path.exists(d2):
+            dirs.append(d2)
+     
+# dirs += ["/media/%s/Videos"%dir 
+#         for dir in os.listdir('/media') 
+#          if dir[0]!='.' ]
+
+# check for /media/(disk name)/Videos
+find_Vdirs('/media')
+       
+# check /media/(user)/(disk name)/Videos
+find_Vdirs(os.path.join('/media',os.getlogin()))
+
+# checi ~/mnt/(server)/Videos
+find_Vdirs(os.path.join(os.path.expanduser('~'),"mnt"))
+
 # rom excludes cdrom cdrom-1 or any other rom.
-dirs += ["/media/%s"%dir
-    for dir in os.listdir('/media') \
-        if (dir[0]!='.'
-            and 'rom' not in dir
-            and 'floppy' not in dir) ]
-# if we get here, I hope it isn't the live CD.
-dirs += [os.path.expanduser('~')]
+for dir in os.listdir('/media'):
+    if (dir[0]!='.'
+        and 'rom' not in dir
+        and 'floppy' not in dir):
+            # if we get here, I hope it isn't the live CD.
+            # dirs.append("/media/%s"%dir)
+            pass
+
+# dirs.append(os.path.expanduser('~'))
 
 print "dirs to check:", dirs
 
@@ -49,7 +71,7 @@ for vid_dir in dirs:
             print 'room for: %s min' % round(minutes,1)
             if minutes>5:
                 vid_dirs.append(vid_dir)
-                break
+                # break
             else:
                 print "%s minutes is not enough." % (minutes)
 
@@ -66,15 +88,16 @@ if files:
     client = d['client']
     show = d['show']
     loc = d.get('room',hostname)
-    dv_dir = os.path.join( vid_dir, 'veyepar', client, show, 'dv', loc )
+    dv_dir = os.path.join( 'veyepar', client, show, 'dv', loc )
 else:
-    dv_dir = os.path.join( vid_dir, 'dv', hostname )
+    dv_dir = os.path.join( 'dv', hostname )
 
 # add output dirs
 for vid_dir in vid_dirs:
+    print "vid_dir", vid_dir
     COMMANDS.append(
         Command('dvsink-files %s %s' % (
-                os.path.join( dv_dir, '%Y-%m-%d','%H_%M_%S.dv' ),
+                os.path.join( vid_dir, dv_dir, '%Y-%m-%d','%H_%M_%S.dv' ),
                 hostport,
                 )))
 
