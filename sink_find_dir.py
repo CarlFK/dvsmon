@@ -21,25 +21,27 @@ dirs  = [os.path.expanduser('~/Videos')]
 # ubuntu now mounts drives under /media/$USER/disk-lable
 # need to support the $USER thing someday?
 
-def find_Vdirs(root):
+def find_Vdirs(root, dirs):
     """ find dir/Videos dirs in root (does not walk the tree) """
-    for d in os.listdir(root):
-        d2 = os.path.join(root,d,'Videos')
-        if os.path.exists(d2):
-            dirs.append(d2)
+    import os
+    if os.path.exists(root):
+        for d in os.listdir(root):
+            d2 = os.path.join(root,d,'Videos')
+            if os.path.exists(d2):
+                dirs.append(d2)
      
 # dirs += ["/media/%s/Videos"%dir 
 #         for dir in os.listdir('/media') 
 #          if dir[0]!='.' ]
 
 # check for /media/(disk name)/Videos
-find_Vdirs('/media')
+find_Vdirs('/media', dirs)
        
 # check /media/(user)/(disk name)/Videos
-find_Vdirs(os.path.join('/media',os.getlogin()))
+find_Vdirs(os.path.join('/media',os.getlogin()),dirs)
 
 # checi ~/mnt/(server)/Videos
-find_Vdirs(os.path.join(os.path.expanduser('~'),"mnt"))
+find_Vdirs(os.path.join(os.path.expanduser('~'),"mnt"),dirs)
 
 # rom excludes cdrom cdrom-1 or any other rom.
 for dir in os.listdir('/media'):

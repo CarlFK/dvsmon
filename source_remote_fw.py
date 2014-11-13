@@ -1,12 +1,21 @@
 #!/usr/bin/python
 
+import socket
+
+hostname=socket.gethostname()
+slavehost = hostname + "s.local"
+
+COMMANDS.append(
+ Command('ssh %s dvsource-firewire'%slavehost)
+)
+
+"""
 # everything hardcoded, it just works.  Don't forget to fill in the X.
 COMMANDS.append(
  Command('ssh 10.0.0.x1 dvsource-firewire')
 )
 
 # magic woo try and fiure it out hope it works it never does.
-"""
 import socket
 
 hostname=socket.gethostname()
