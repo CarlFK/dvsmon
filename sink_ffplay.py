@@ -11,8 +11,13 @@
 """
 
 COMMANDS.append(
-  Command('dvsink-command %s -- ffplay - -f dv -vn -framedrop -threads 1 '
+  Command('dvsink-command %s -- avplay - -f dv -vn -framedrop -threads 1 '
           '-loglevel quiet -flags low_delay -x 400 -y 200'
+          % (hostport,)))
+
+COMMANDS.append(
+  Command('dvsink-command %s -- avplay - -f dv -framedrop -threads 1 '
+          '-loglevel quiet -flags low_delay'
           % (hostport,)))
 
 

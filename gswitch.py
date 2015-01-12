@@ -34,3 +34,17 @@ gst-launch-1.0
 
 COMMANDS.append( Command(src) )
 COMMANDS.append( Command(src) )
+
+vid_src = """
+gst-launch-1.0 v4l2src device=/dev/video0 \
+        ! decodebin \
+        ! videorate \
+        ! videoconvert \
+        ! videoscale add-borders=1 \
+        ! video/x-raw,format=I420,width=300,height=200,framerate=25/1 \
+        ! gdppay \
+        ! tcpclientsink port=3000
+""".replace('\n','')
+
+COMMANDS.append( Command(vid_src) )
+
