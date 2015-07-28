@@ -6,8 +6,9 @@ AUDIO_CAPS="audio/x-raw, rate=48000, channels=2, format=S16LE, layout=interleave
 
 # COMMANDS.append( Command('gst-switch-srv --record foo') )
 COMMANDS.append( Command(
-    'gst-switch-srv --record foo.avi -f "{}"'.format(VIDEO_CAPS)) )
-    # 'gst-switch-srv --record %Y-%m-%dT%H_%M_%S.avi') )
+    # 'gst-switch-srv --record foo.avi -f "{}"'.format(VIDEO_CAPS)) )
+    'gst-switch-srv --record %Y-%m-%dT%H_%M_%S.mkv -f "{}"'.format(
+        VIDEO_CAPS)) )
 
 COMMANDS.append( Command('gst-switch-ui') )
 
