@@ -11,8 +11,11 @@
 python ./dvs-mon.py \
   -c \
     dvswitch.py \
+    dvswitch-schroot.py \
     source_test.py \
     source_alsa.py \
     sink_find_dir.py \
     sink_ffplay.py \
+    source_remote_usb.py \
+    source_remote_fw.py \
     $*
