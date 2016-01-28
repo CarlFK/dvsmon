@@ -1,4 +1,6 @@
-#!/bin/bash -x
+#!/bin/bash -ix
+
+cd $(dirname $0)
 
 # sencible params for production (recording talks) 
 
