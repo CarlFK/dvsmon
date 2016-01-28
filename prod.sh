@@ -6,6 +6,7 @@ cd $(dirname $0)
 
 ./dvs-mon.py -c \
     dvswitch-schroot.py \
+    source_alsa.py \
     source_fw.py \
     source_remote_usb.py \
     source_remote_fw.py \

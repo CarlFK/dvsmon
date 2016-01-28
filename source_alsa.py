@@ -30,7 +30,7 @@ if hw=='29':
     last_card = cards[-4]
     hw = last_card.split()[0]
 
-COMMANDS.append( Command('dvsource-alsa -s ntsc -r 48000 hw:%s %s' % (hw,hostport,)))
+COMMANDS.append( Command('dvsource-alsa -s pal -r 48000 hw:%s %s' % (hw,hostport,)))
 # COMMANDS.append( 'dvsource-alsa -s ntsc -r 48000 hw:0 %s' % (hostport,))
 
 
