@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
-# everything hardcoded, it just works.  Don't forget to fill in the X.
+import os
+
+grab = os.environ['DVS_GRAB']
+
 COMMANDS.append(
- Command('ssh 10.0.0.2 dvsource-v4l2-other -d /dev/video1 -c="image/jpeg,width=1280,height=720" -s ntsc -a 16:9')
+ Command('ssh {} dvsource-v4l2-other -d /dev/video1 -c="image/jpeg,width=1280,height=720" -s ntsc -a 16:9'.format(grab))
 )
 
 """

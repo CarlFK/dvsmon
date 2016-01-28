@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
-import socket
+import os
 
-hostname=socket.gethostname()
-slavehost = hostname + "s.local"
+cam = os.environ['DVS_CAM']
 
 COMMANDS.append(
- Command('ssh %s dvsource-firewire'%slavehost)
+ Command('ssh {} dvsource-firewire'.format(cam))
 )
 
 """
