@@ -5,7 +5,7 @@ import os
 grab = os.environ['DVS_GRAB']
 
 COMMANDS.append(
- Command('ssh {} dvsource-v4l2-other -d /dev/video0 -c="image/jpeg,width=1280,height=720" -s pal -a 16:9'.format(grab))
+ Command('trap "ssh {} killall gst-launch-1.0" TERM; ssh {} dvsource-v4l2-other -d /dev/video0 -c="image/jpeg,width=1280,height=720" -s pal -a 16:9'.format(grab, grab))
 )
 
 """
