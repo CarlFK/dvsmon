@@ -32,9 +32,12 @@ if hw=='29':
     last_card = cards[-4]
     hw = last_card.split()[0]
 
+# moved this from the command line for vodto's command line
+hw = "hw:" + hw
+
 hw = os.environ['VOC_ALSA_DEV']
 
-COMMANDS.append( Command('dvsource-alsa -s pal -a 16:9 -r 48000 hw:%s %s' % (hw,hostport,)))
+COMMANDS.append( Command('dvsource-alsa -s pal -a 16:9 -r 48000 %s %s' % (hw,hostport,)))
 # COMMANDS.append( 'dvsource-alsa -s ntsc -r 48000 hw:0 %s' % (hostport,))
 
 
