@@ -35,7 +35,7 @@ if hw=='29':
 # moved this from the command line for vodto's command line
 hw = "hw:" + hw
 
-hw = os.environ['VOC_ALSA_DEV']
+hw = os.environ['DVS_ALSA_DEV']
 
 COMMANDS.append( Command('dvsource-alsa -s pal -a 16:9 -r 48000 %s %s' % (hw,hostport,)))
 # COMMANDS.append( 'dvsource-alsa -s ntsc -r 48000 hw:0 %s' % (hostport,))
