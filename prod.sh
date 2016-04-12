@@ -1,15 +1,21 @@
 #!/bin/bash -ix
 
 cd $(dirname $0)
+dvsdir=$PWD
+
+cd ~/voctomix
 
 # sencible params for production (recording talks) 
 
-./dvs-mon.py -c \
-    dvswitch-schroot.py \
-    source_alsa.py \
-    source_remote_fw.py \
-    source_remote_usb.py \
-    sink_find_dir.py 
+$dvsdir/dvs-mon.py -c \
+    $dvsdir/vocto-all.py
+
+echo \
+    vocto-core.py \
+    vocto-gui.py \
+    vocto-src-cam.py \
+    vocto-src-grab.py \
+    vocto-sink-file.py
 
 #  dvswitch.py \
 #    source_fw.py \
