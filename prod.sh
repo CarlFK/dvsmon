@@ -1,22 +1,13 @@
 #!/bin/bash -ix
 
-cd $(dirname $0)
-dvsdir=$PWD
-
-cd ~/voctomix
-
 # sencible params for production (recording talks) 
 
-$dvsdir/dvs-mon.py -c \
-    $dvsdir/vocto-all.py
+cd $(dirname $0)
+dvs_dir=$PWD
 
-echo \
-    vocto-core.py \
-    vocto-gui.py \
-    vocto-src-cam.py \
-    vocto-src-grab.py \
-    vocto-sink-file.py
+vocto_dir="${1:-~/voctomix}"
+cd $vocto_dir
 
-#  dvswitch.py \
-#    source_fw.py \
-# --host 130.216.0.$1 --port 1234
+$dvs_dir/dvs-mon.py -c \
+    $dvs_dir/vocto-prod1.py
+

@@ -82,27 +82,27 @@ class PollingThread(threading.Thread):
         self.status("RUNNING")
 
     def cleanup(self):
-        print "Cleanup", self
+        print("Cleanup", self)
         try:
             self.kill()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
         try:
             self.poll()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
         time.sleep(0.1)
         try:
             self.killhard()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
         try:
             self.poll()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
     def status(self, status):
         self._status.append((status, time.time()))
@@ -150,16 +150,16 @@ class PollingThread(threading.Thread):
             # Stop all the processes first (so they don't keep spawning new
             # processes in this group).
             os.killpg(self.process_group, signal.SIGSTOP)
-        except OSError, e:
-            print self._status
-            print e
+        except OSError as e:
+            print(self._status)
+            print(e)
 
         try:
             # Kill all the processes in the process group we created.
             os.killpg(self.process_group, signal.SIGKILL)
-        except OSError, e:
-            print self._status
-            print e
+        except OSError as e:
+            print(self._status)
+            print(e)
 
     def poll(self):
         self.process.poll()
@@ -172,7 +172,7 @@ class PollingThread(threading.Thread):
             pipe, output = self.fd_to_output[fd]
             try:
                 data = pipe.read()
-            except IOError, e:
+            except IOError as e:
                 wx.CallAfter(output.Append, "***Internal Error***: %s" % e)
 
             wx.CallAfter(output.Append, data)
@@ -292,13 +292,13 @@ class CommandRunner(object):
             # restore to normal size
             self.stdout.Show()
             self.stderr.Show()
-            animate(range(1, 11))
+            animate(list(range(1, 11)))
             # self.cr_sizer.SetProportion(1)
 
         else:
             # remove detail from display
             # squish
-            animate(reversed(range(1, 11)))
+            animate(reversed(list(range(1, 11))))
             self.stdout.Hide()
             self.stderr.Hide()
             self.cr_sizer.SetProportion(0)
@@ -319,7 +319,7 @@ class CommandRunner(object):
                 self.cmd.command, self.stdout, self.stderr, self.ProcessEnded)
 
             self.MarkOuts("Started.")
-            print 'Executed:  %s' % (self.cmd.command)
+            print('Executed:  %s' % (self.cmd.command))
             self.poller.start()
 
     def _KillMore(self, event, poller):
@@ -333,7 +333,7 @@ class CommandRunner(object):
 
         if self.poller is not None:
             self.MarkOuts("Sending TERM...")
-            print 'Killing: %s' % (self.cmd.command)
+            print('Killing: %s' % (self.cmd.command))
             self.poller.kill()
 
         event.Skip()
@@ -357,7 +357,7 @@ class CommandRunner(object):
             self.Detail(show=True)
 
         self.poller = None
-        print 'DIED: %s with %s' % (self.cmd.command, retcode)
+        print('DIED: %s with %s' % (self.cmd.command, retcode))
         self.deadtime = self.keepalive
 
 class Command(object):
@@ -384,7 +384,7 @@ def mk_commands(args):
     if args.commands:
         COMMANDS = [ ]
         for cmd_file in args.commands:
-            execfile(cmd_file, {'Command': Command}, locals())
+            exec(compile(open(cmd_file).read(), cmd_file, 'exec'), {'Command': Command}, locals())
     else:
         # for testing.
         COMMANDS=[
@@ -438,9 +438,9 @@ def main():
     # Set up signal handlers which terminate the application when they occur.
     # Create human names for the signals
     signal.names = dict(
-            (k, v) for v, k in signal.__dict__.iteritems() if v.startswith('SIG'))
+            (k, v) for v, k in signal.__dict__.items() if v.startswith('SIG'))
     def signal_cleanup(sig, frame):
-        print "Caught %s, exiting" % signal.names[sig]
+        print("Caught %s, exiting" % signal.names[sig])
         wx.CallAfter(app.Exit)
     signal.signal(signal.SIGTERM, signal_cleanup)
     signal.signal(signal.SIGINT, signal_cleanup)

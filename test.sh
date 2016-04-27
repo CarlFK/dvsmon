@@ -2,12 +2,20 @@
 
 # sencible params for testing 
 
+cd $(dirname $0)
+dvsdir=$PWD
+
+cd ~/voctomix
+
 # handy lines, cut/paste/un#comment:
 # --show-all-detail \
-#     source_fw.py \
-#    source_remote_fw.py \
-# /usr/bin/python2.7 ./dvs-mon.py \
 
+python ./dvs-mon.py \
+  -c vocto-test.py
+
+exit
+# Bye bye DVswitch, it was a good 10 years.
+# we will miss you.
 python ./dvs-mon.py \
   -c \
     dvswitch.py \

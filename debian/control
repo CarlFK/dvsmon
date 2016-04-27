@@ -8,6 +8,6 @@ Homepage: https://github.com/CarlFK/dvsmon
 
 Package: dvsmon
 Architecture: any
-Depends: python-wxgtk2.8, ${python:Depends}, dvswitch, dvsource, dvsink
+Depends: python-wxgtk3.0, ${python:Depends}
 XB-Python-Version: ${python:Versions}
 Description: GUI to launch and monitor the DVswitch components.
