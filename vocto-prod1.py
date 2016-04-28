@@ -1,11 +1,10 @@
 #!/usr/bin/python
 
-COMMANDS.append( Command('voctocore/voctocore.py -vv'))
-COMMANDS.append( Command('voctogui/voctogui.py -vv'))
-COMMANDS.append( Command('example-scripts/gstreamer/ingest.py'))
+COMMANDS.append( Command('voctocore -vv'))
+COMMANDS.append( Command('voctogui -vv'))
+COMMANDS.append( Command('ingest'))
 COMMANDS.append( Command(
-    # 'clients/source/ingest.py'
-    'example-scripts/gstreamer/ingest.py'
+    'ingest'
     ' --video-source hdmi2usb'
     ' --audio-source pulse'
     ' --audio-dev alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo'))
