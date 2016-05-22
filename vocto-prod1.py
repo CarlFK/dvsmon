@@ -13,8 +13,11 @@ def main(COMMANDS,conf):
         'ingest --video-source blackmagichdmi --audio-source blackmagichdmi'
       ))
     COMMANDS.append( Command(
+        './ingest.py --host cnt3 --video-source hdmi2usb --video-dev /dev/video1' ))
+
+    COMMANDS.append( Command(
         'ingest'
-        ' --video-source hdmi2usb'
+        ' --video-source hdmi2usb --video-dev /dev/video1'
         ' --audio-source pulse'
         ' --audio-dev alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo'))
     COMMANDS.append( Command(

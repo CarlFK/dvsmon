@@ -198,7 +198,8 @@ class CommandRunner(object):
     keepalive = False
 
     def __init__(self, frame, cmd, args):
-
+ 
+        print(cmd)
         self.cmd = cmd
         self.frame = frame
 
@@ -363,12 +364,12 @@ class CommandRunner(object):
 class Command(object):
     def __init__ (self, command, label = None):
         # strip trailing spaces which get passed as a parameter.
-        self.command = command.strip ()
+        self.command = command.strip()
 
         if label is None:
             self.label = self.command
         else:
-            self.label = label.strip ()
+            self.label = label.strip()
 
 
 def mk_commands(args):
