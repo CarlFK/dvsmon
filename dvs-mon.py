@@ -199,7 +199,7 @@ class CommandRunner(object):
 
     def __init__(self, frame, cmd, args):
  
-        print(cmd)
+        print(cmd.command)
         self.cmd = cmd
         self.frame = frame
 
