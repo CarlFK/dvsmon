@@ -8,20 +8,22 @@ def main(COMMANDS,conf):
     print(conf)
     COMMANDS.append( Command('voctocore -vv'))
     COMMANDS.append( Command('voctogui -vv'))
+    COMMANDS.append( Command(
+        'ingest --video-source blackmagic --video-attribs "connection=hdmi mode=18" --audio-source blackmagic'
+      ))
+    """
     COMMANDS.append( Command('ingest'))
     COMMANDS.append( Command(
-        'ingest --video-source blackmagichdmi --audio-source blackmagichdmi'
-      ))
-    COMMANDS.append( Command(
-        './ingest.py --host cnt3 --video-source hdmi2usb --video-dev /dev/video1' ))
+        'ingest --host cnt3 --video-source hdmi2usb --video-dev /dev/video1' ))
 
     COMMANDS.append( Command(
         'ingest'
         ' --video-source hdmi2usb --video-dev /dev/video1'
         ' --audio-source pulse'
         ' --audio-dev alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo'))
+    """
     COMMANDS.append( Command(
-        'record-timestamp {dest_path}'.format(**conf)))
+        'record-timestamp 1800 {dest_path}'.format(**conf)))
     COMMANDS.append( Command(
         'generate-cut-list | tee --append {dest_path}/cut-list.log'.format(
             **conf)))
