@@ -23,7 +23,9 @@ def main(COMMANDS,conf):
         ' --audio-dev alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo'))
     """
     COMMANDS.append( Command(
-        'record-timestamp 1800 {dest_path}'.format(**conf)))
+        'record-timestamp {dest_path}'.format(**conf)))
+    COMMANDS.append( Command(
+        'record-mixed-av.sh {dest_path}'.format(**conf)))
     COMMANDS.append( Command(
         'generate-cut-list | tee --append {dest_path}/cut-list.log'.format(
             **conf)))
