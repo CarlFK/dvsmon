@@ -25,7 +25,7 @@ def main(COMMANDS,conf):
     COMMANDS.append( Command(
         'record-timestamp {dest_path}'.format(**conf)))
     COMMANDS.append( Command(
-        'record-mixed-av.sh {dest_path}'.format(**conf)))
+        'record-mixed-av {dest_path}'.format(**conf)))
     COMMANDS.append( Command(
         'generate-cut-list | tee --append {dest_path}/cut-list.log'.format(
             **conf)))
