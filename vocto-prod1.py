@@ -11,19 +11,19 @@ def main(COMMANDS,conf):
     COMMANDS.append( Command(
         'ingest --video-source blackmagic --video-attribs "connection=hdmi mode=18" --audio-source blackmagic'
       ))
+# ingest --port 10001 --host 10.0.0.1 --video-source hdmi2usb --video-attribs "device=/dev/video0"
     """
     COMMANDS.append( Command('ingest'))
-    COMMANDS.append( Command(
-        'ingest --host cnt3 --video-source hdmi2usb --video-dev /dev/video1' ))
+    COMMANDS.append( Command( 'ingest --port 10001 --video-source hdmi2usb ' ))
 
     COMMANDS.append( Command(
         'ingest'
-        ' --video-source hdmi2usb --video-dev /dev/video1'
+        ' --video-source hdmi2usb --video-attribs "device=/dev/video1"'
         ' --audio-source pulse'
-        ' --audio-dev alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo'))
-    """
+        ' --audio-attribs device=alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo'))
     COMMANDS.append( Command(
         'record-timestamp {dest_path}'.format(**conf)))
+    """
     COMMANDS.append( Command(
         'record-mixed-av {dest_path}'.format(**conf)))
     COMMANDS.append( Command(
